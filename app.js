@@ -258,17 +258,19 @@
 
   // ---------------- Editor render ----------------
   function renderEditor(){
-    var card = qs('editorCard');
-    card.innerHTML = '';
-    if(!DATA){
-      card.appendChild(el('div','hint')).textContent = 'Laad een JSON om te starten.';
-      return;
-    }
+            var body = qs('editorBody');
+        if(!body) return;
 
+        body.innerHTML = '';
+
+        if(!DATA){
+            body.appendChild(el('div','hint')).textContent = 'Laad een JSON om te starten.';
+            return;
+        }
     if(currentView === 'prestart'){
       qs('editorTitle').textContent = 'Prestart';
       var node = qs('tplPrestart').content.cloneNode(true);
-      card.appendChild(node);
+      body.appendChild(node);
 
       // ensure paths
       DATA.prestart = ensureObj(DATA.prestart);
@@ -312,13 +314,13 @@
       if(locs[i] && locs[i].id === currentLocId){ loc = locs[i]; break; }
     }
     if(!loc){
-      card.appendChild(el('div','hint')).textContent = 'Kies een locatie links.';
+      body.appendChild(el('div','hint')).textContent = 'Kies een locatie links.';
       return;
     }
 
     qs('editorTitle').textContent = 'Locatie';
     var n2 = qs('tplLocatie').content.cloneNode(true);
-    card.appendChild(n2);
+    body.appendChild(n2);
 
     loc.uitleg = ensureObj(loc.uitleg);
     loc.images = safeArr(loc.images);
