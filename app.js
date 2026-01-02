@@ -908,6 +908,17 @@ function setButtonLabels(){
 
 // init labels
 setButtonLabels();
+// start altijd dicht
+closeMenu(q_otherMenu);
+closeMenu(q_mediaMenu);
+
+// klik in menu mag niet bubbelen naar document
+if(q_otherMenu){
+  q_otherMenu.addEventListener('click', function(e){ e.stopPropagation(); });
+}
+if(q_mediaMenu){
+  q_mediaMenu.addEventListener('click', function(e){ e.stopPropagation(); });
+}
 
 // direct add buttons
 if(q_addOpen){
@@ -916,15 +927,18 @@ if(q_addOpen){
   });
 }
 if(q_addOther){
-  q_addOther.addEventListener('click', function(){
+  q_addOther.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
     addVraagOfType(lastQType.other || 'mc');
   });
 }
 if(q_addMedia){
-  q_addMedia.addEventListener('click', function(){
+  q_addMedia.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
     addVraagOfType(lastQType.media || 'photo');
   });
 }
+
 
 // dropdown helpers
 function openMenu(menuEl){
