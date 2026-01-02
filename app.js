@@ -302,166 +302,217 @@
   }
 
   // ---------------- Editor render ----------------
-  function renderEditor(){
-            var body = qs('editorBody');
-        if(!body) return;
+function renderEditor(){
+  var body = qs('editorBody');
+  if(!body) return;
 
-        body.innerHTML = '';
+  body.innerHTML = '';
 
-        if(!DATA){
-            body.appendChild(el('div','hint')).textContent = 'Laad een JSON om te starten.';
-            return;
-        }
-    if(currentView === 'prestart'){
-      qs('editorTitle').textContent = 'Prestart';
-      var node = qs('tplPrestart').content.cloneNode(true);
-      body.appendChild(node);
-
-      // ensure paths
-      DATA.prestart = ensureObj(DATA.prestart);
-      DATA.prestart.meetingPoint = ensureObj(DATA.prestart.meetingPoint);
-      DATA.prestart.images = safeArr(DATA.prestart.images);
-
-      // bind fields
-      qs('pre_useLocationId').value = DATA.prestart.useLocationId || '';
-      qs('pre_meetingLabel').value = DATA.prestart.meetingPoint.label || '';
-      qs('pre_meetingLat').value = (DATA.prestart.meetingPoint.lat!=null) ? DATA.prestart.meetingPoint.lat : '';
-      qs('pre_meetingLng').value = (DATA.prestart.meetingPoint.lng!=null) ? DATA.prestart.meetingPoint.lng : '';
-      qs('pre_message').value = DATA.prestart.message || '';
-
-      qs('pre_useLocationId').addEventListener('input', function(){ DATA.prestart.useLocationId = this.value.trim(); });
-      qs('pre_meetingLabel').addEventListener('input', function(){ DATA.prestart.meetingPoint.label = this.value; });
-      qs('pre_meetingLat').addEventListener('input', function(){ DATA.prestart.meetingPoint.lat = this.value===''?null:Number(this.value); });
-      qs('pre_meetingLng').addEventListener('input', function(){ DATA.prestart.meetingPoint.lng = this.value===''?null:Number(this.value); });
-      qs('pre_message').addEventListener('input', function(){ DATA.prestart.message = this.value; });
-
-      // images editor
-      var preImages = qs('pre_images');
-      buildImagesEditor(preImages, DATA.prestart.images, 'prestart', function(newArr){
-        DATA.prestart.images = newArr;
-      });
-
-      // add image file
-      var addInp = qs('pre_addImageFile');
-      var dz = qs('pre_dropzone');
-        bindDropzone(dz, function(files){
-        // voeg allemaal toe
-        for(var i=0;i<files.length;i++){
-            (function(file){
-            // “fake” file input flow hergebruiken
-            var idx = DATA.prestart.images.length;
-            DATA.prestart.images.push({ file: file.name || 'image.jpg', credit: '' });
-
-            var reader = new FileReader();
-            reader.onload = function(){
-                previewCache['prestart|' + idx] = reader.result;
-                renderEditor();
-            };
-      reader.readAsDataURL(file);
-    })(files[i]);
+  if(!DATA){
+    body.appendChild(el('div','hint')).textContent = 'Laad een JSON om te starten.';
+    return;
   }
-  renderEditor();
-});
 
-      addInp.addEventListener('change', function(){
-        handleAddImageFile(addInp, DATA.prestart.images, 'prestart', function(newArr){
+  // helper: voeg meerdere files toe + previews, met één nette rerender
+  function addImagesFromFiles(files, arr, cachePrefix){
+    if(!files || !files.length) return;
+
+    var startIndex = arr.length;
+    // eerst data toevoegen
+    for(var i=0;i<files.length;i++){
+      var f = files[i];
+      arr.push({ file: (f && f.name) ? f.name : 'image.jpg', credit: '' });
+    }
+
+    // dan previews inlezen
+    var remaining = files.length;
+    for(var j=0;j<files.length;j++){
+      (function(file, idx){
+        var reader = new FileReader();
+        reader.onload = function(){
+          previewCache[cachePrefix + '|' + idx] = reader.result;
+          remaining--;
+          if(remaining <= 0){
+            renderEditor(); // 1 rerender wanneer alles klaar is
+          }
+        };
+        reader.onerror = function(){
+          remaining--;
+          if(remaining <= 0) renderEditor();
+        };
+        reader.readAsDataURL(file);
+      })(files[j], startIndex + j);
+    }
+
+    // snelle render zodat je de nieuwe rijen al ziet, preview volgt daarna
+    renderEditor();
+  }
+
+  // ---------------- PRESTART ----------------
+  if(currentView === 'prestart'){
+    qs('editorTitle').textContent = 'Prestart';
+
+    var node = qs('tplPrestart').content.cloneNode(true);
+    body.appendChild(node);
+
+    // pak elementen binnen de editor (niet globaal)
+    var pre_useLocationId = body.querySelector('#pre_useLocationId');
+    var pre_meetingLabel  = body.querySelector('#pre_meetingLabel');
+    var pre_meetingLat    = body.querySelector('#pre_meetingLat');
+    var pre_meetingLng    = body.querySelector('#pre_meetingLng');
+    var pre_message       = body.querySelector('#pre_message');
+
+    var preImagesEl       = body.querySelector('#pre_images');
+    var pre_addImageFile  = body.querySelector('#pre_addImageFile');
+    var pre_dropzone      = body.querySelector('#pre_dropzone');
+
+    // ensure paths
+    DATA.prestart = ensureObj(DATA.prestart);
+    DATA.prestart.meetingPoint = ensureObj(DATA.prestart.meetingPoint);
+    DATA.prestart.images = safeArr(DATA.prestart.images);
+
+    // set values
+    pre_useLocationId.value = DATA.prestart.useLocationId || '';
+    pre_meetingLabel.value  = DATA.prestart.meetingPoint.label || '';
+    pre_meetingLat.value    = (DATA.prestart.meetingPoint.lat!=null) ? DATA.prestart.meetingPoint.lat : '';
+    pre_meetingLng.value    = (DATA.prestart.meetingPoint.lng!=null) ? DATA.prestart.meetingPoint.lng : '';
+    pre_message.value       = DATA.prestart.message || '';
+
+    // listeners
+    pre_useLocationId.addEventListener('input', function(){ DATA.prestart.useLocationId = this.value.trim(); });
+    pre_meetingLabel.addEventListener('input', function(){ DATA.prestart.meetingPoint.label = this.value; });
+    pre_meetingLat.addEventListener('input', function(){ DATA.prestart.meetingPoint.lat = this.value===''?null:Number(this.value); });
+    pre_meetingLng.addEventListener('input', function(){ DATA.prestart.meetingPoint.lng = this.value===''?null:Number(this.value); });
+    pre_message.addEventListener('input', function(){ DATA.prestart.message = this.value; });
+
+    // images editor
+    buildImagesEditor(preImagesEl, DATA.prestart.images, 'prestart', function(newArr){
+      DATA.prestart.images = newArr;
+    });
+
+    // file picker
+    if(pre_addImageFile){
+      pre_addImageFile.addEventListener('change', function(){
+        handleAddImageFile(pre_addImageFile, DATA.prestart.images, 'prestart', function(newArr){
           DATA.prestart.images = newArr;
         });
       });
-
-      return;
     }
 
-    // location view
-    var locs = safeArr(DATA.locaties);
-    var loc = null;
-    for(var i=0;i<locs.length;i++){
-      if(locs[i] && locs[i].id === currentLocId){ loc = locs[i]; break; }
-    }
-    if(!loc){
-      body.appendChild(el('div','hint')).textContent = 'Kies een locatie links.';
-      return;
+    // drag & drop
+    if(pre_dropzone){
+      bindDropzone(pre_dropzone, function(files){
+        addImagesFromFiles(files, DATA.prestart.images, 'prestart');
+      });
     }
 
-    qs('editorTitle').textContent = 'Locatie';
-    var n2 = qs('tplLocatie').content.cloneNode(true);
-    body.appendChild(n2);
+    return;
+  }
 
-    loc.uitleg = ensureObj(loc.uitleg);
-    loc.images = safeArr(loc.images);
-    loc.vragen = safeArr(loc.vragen);
+  // ---------------- LOCATIE ----------------
+  var locs = safeArr(DATA.locaties);
+  var loc = null;
+  for(var i=0;i<locs.length;i++){
+    if(locs[i] && locs[i].id === currentLocId){ loc = locs[i]; break; }
+  }
+  if(!loc){
+    body.appendChild(el('div','hint')).textContent = 'Kies een locatie links.';
+    return;
+  }
 
-    qs('loc_id').value = loc.id || '';
-    qs('loc_slot').value = loc.slot || '';
-    qs('loc_naam').value = loc.naam || '';
-    qs('loc_lat').value = (loc.lat!=null) ? loc.lat : '';
-    qs('loc_lng').value = (loc.lng!=null) ? loc.lng : '';
-    qs('loc_radius').value = (loc.radius!=null) ? loc.radius : '';
-    qs('loc_routeHint').value = loc.routeHint || '';
-    qs('loc_uitlegKort').value = loc.uitleg.kort || '';
-    qs('loc_uitlegLang').value = loc.uitleg.uitgebreid || '';
+  qs('editorTitle').textContent = 'Locatie';
 
-    var mapA = qs('loc_mapLink');
-    mapA.href = makeMapLink(loc.lat, loc.lng);
+  var n2 = qs('tplLocatie').content.cloneNode(true);
+  body.appendChild(n2);
 
-    qs('loc_slot').addEventListener('input', function(){ loc.slot = this.value.trim(); });
-    qs('loc_naam').addEventListener('input', function(){ loc.naam = this.value; });
-    qs('loc_lat').addEventListener('input', function(){
-      loc.lat = this.value===''?null:Number(this.value);
-      mapA.href = makeMapLink(loc.lat, loc.lng);
-    });
-    qs('loc_lng').addEventListener('input', function(){
-      loc.lng = this.value===''?null:Number(this.value);
-      mapA.href = makeMapLink(loc.lat, loc.lng);
-    });
-    qs('loc_radius').addEventListener('input', function(){ loc.radius = this.value===''?null:Number(this.value); });
-    qs('loc_routeHint').addEventListener('input', function(){ loc.routeHint = this.value; });
-    qs('loc_uitlegKort').addEventListener('input', function(){ loc.uitleg.kort = this.value; });
-    qs('loc_uitlegLang').addEventListener('input', function(){ loc.uitleg.uitgebreid = this.value; });
+  // elementen binnen body
+  var loc_id        = body.querySelector('#loc_id');
+  var loc_slot      = body.querySelector('#loc_slot');
+  var loc_naam      = body.querySelector('#loc_naam');
+  var loc_lat       = body.querySelector('#loc_lat');
+  var loc_lng       = body.querySelector('#loc_lng');
+  var loc_radius    = body.querySelector('#loc_radius');
+  var loc_routeHint = body.querySelector('#loc_routeHint');
+  var loc_uitlegKort= body.querySelector('#loc_uitlegKort');
+  var loc_uitlegLang= body.querySelector('#loc_uitlegLang');
+  var loc_mapLink   = body.querySelector('#loc_mapLink');
 
-    // images
-    var locImages = qs('loc_images');
-    buildImagesEditor(locImages, loc.images, 'loc:' + loc.id, function(newArr){
-      loc.images = newArr;
-    });
+  var locImagesEl   = body.querySelector('#loc_images');
+  var loc_addImageFile = body.querySelector('#loc_addImageFile');
+  var loc_dropzone  = body.querySelector('#loc_dropzone');
 
-    var addInp2 = qs('loc_addImageFile');
-            var dz2 = qs('loc_dropzone');
-        bindDropzone(dz2, function(files){
-        for(var i=0;i<files.length;i++){
-            (function(file){
-            var idx = loc.images.length;
-            loc.images.push({ file: file.name || 'image.jpg', credit: '' });
+  var locVragenEl   = body.querySelector('#loc_vragen');
+  var loc_addVraag  = body.querySelector('#loc_addVraag');
 
-            var reader = new FileReader();
-            reader.onload = function(){
-                previewCache['loc:' + loc.id + '|' + idx] = reader.result;
-                renderEditor();
-            };
-            reader.readAsDataURL(file);
-            })(files[i]);
-        }
-        renderEditor();
-});
+  // ensure
+  loc.uitleg = ensureObj(loc.uitleg);
+  loc.images = safeArr(loc.images);
+  loc.vragen = safeArr(loc.vragen);
 
-    addInp2.addEventListener('change', function(){
-      handleAddImageFile(addInp2, loc.images, 'loc:' + loc.id, function(newArr){
+  // set values
+  loc_id.value         = loc.id || '';
+  loc_slot.value       = loc.slot || '';
+  loc_naam.value       = loc.naam || '';
+  loc_lat.value        = (loc.lat!=null) ? loc.lat : '';
+  loc_lng.value        = (loc.lng!=null) ? loc.lng : '';
+  loc_radius.value     = (loc.radius!=null) ? loc.radius : '';
+  loc_routeHint.value  = loc.routeHint || '';
+  loc_uitlegKort.value = loc.uitleg.kort || '';
+  loc_uitlegLang.value = loc.uitleg.uitgebreid || '';
+
+  if(loc_mapLink){
+    loc_mapLink.href = makeMapLink(loc.lat, loc.lng);
+  }
+
+  // listeners
+  loc_slot.addEventListener('input', function(){ loc.slot = this.value.trim(); });
+  loc_naam.addEventListener('input', function(){ loc.naam = this.value; });
+
+  loc_lat.addEventListener('input', function(){
+    loc.lat = this.value===''?null:Number(this.value);
+    if(loc_mapLink) loc_mapLink.href = makeMapLink(loc.lat, loc.lng);
+  });
+  loc_lng.addEventListener('input', function(){
+    loc.lng = this.value===''?null:Number(this.value);
+    if(loc_mapLink) loc_mapLink.href = makeMapLink(loc.lat, loc.lng);
+  });
+  loc_radius.addEventListener('input', function(){ loc.radius = this.value===''?null:Number(this.value); });
+  loc_routeHint.addEventListener('input', function(){ loc.routeHint = this.value; });
+  loc_uitlegKort.addEventListener('input', function(){ loc.uitleg.kort = this.value; });
+  loc_uitlegLang.addEventListener('input', function(){ loc.uitleg.uitgebreid = this.value; });
+
+  // images
+  buildImagesEditor(locImagesEl, loc.images, 'loc:' + loc.id, function(newArr){
+    loc.images = newArr;
+  });
+
+  if(loc_addImageFile){
+    loc_addImageFile.addEventListener('change', function(){
+      handleAddImageFile(loc_addImageFile, loc.images, 'loc:' + loc.id, function(newArr){
         loc.images = newArr;
       });
     });
+  }
 
-    // vragen
-    var vr = qs('loc_vragen');
-    buildVragenEditor(vr, loc.vragen, function(newArr){
-      // trim empty strings at end? liever niet automatisch; user is baas
-      loc.vragen = newArr;
+  if(loc_dropzone){
+    bindDropzone(loc_dropzone, function(files){
+      addImagesFromFiles(files, loc.images, 'loc:' + loc.id);
     });
+  }
 
-    qs('loc_addVraag').addEventListener('click', function(){
+  // vragen
+  buildVragenEditor(locVragenEl, loc.vragen, function(newArr){
+    loc.vragen = newArr;
+  });
+
+  if(loc_addVraag){
+    loc_addVraag.addEventListener('click', function(){
       loc.vragen.push('');
       renderEditor();
     });
   }
+}
+
 
   // ---------------- Load / Bind top UI ----------------
   function bindTabs(){
