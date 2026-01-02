@@ -140,6 +140,7 @@
       var row = rowTpl.content.firstElementChild.cloneNode(true);
 
       var imgTag = row.querySelector('.imgTag');
+      var previewBox = row.querySelector('.imgPreview');
       var inpFile = row.querySelector('.imgFile');
       var inpCredit = row.querySelector('.imgCredit');
       var inpCaption = row.querySelector('.imgCaption');
@@ -150,11 +151,35 @@
 
       // preview: prefer cache (local chosen file), else guess by file path in repo
       var cacheKey = contextKey + '|' + idx;
-      var cached = previewCache[cacheKey];
-      var src = cached || imgUrlFromFileField(img.file || '');
-      if(src) imgTag.src = src;
-      else imgTag.removeAttribute('src');
+      // placeholder node
+        var ph = el('div','imgPlaceholder');
+        ph.textContent = 'Preview: enkel nieuw toegevoegde foto’s worden getoond (tot je ze in /assets/img plaatst).';
 
+        function showPlaceholder(){
+        imgTag.removeAttribute('src');
+        if(!previewBox.querySelector('.imgPlaceholder')){
+            previewBox.appendChild(ph);
+        }
+        }
+        function hidePlaceholder(){
+        var p = previewBox.querySelector('.imgPlaceholder');
+        if(p) p.remove();
+        }
+
+        var cached = previewCache[cacheKey];
+        var src = cached || imgUrlFromFileField(img.file || '');
+
+        if(src){
+        imgTag.src = src;
+        hidePlaceholder();
+
+        // als browser het niet kan laden -> placeholder tonen
+        imgTag.onerror = function(){
+            showPlaceholder();
+        };
+        }else{
+        showPlaceholder();
+        }
       function commit(){
         img.file = inpFile.value.trim();
         img.credit = inpCredit.value.trim();

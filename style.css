@@ -186,6 +186,7 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   margin-top:10px;
 }
 .imgPreview{
+  position: relative;
   border-radius:14px;
   border:1px solid var(--line);
   background: rgba(255,255,255,.04);
@@ -196,7 +197,18 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
 .imgTag{ width:100%; height:100%; object-fit:cover; display:block; }
 .imgFields{ display:grid; grid-template-columns: 1fr; gap:8px; }
 .imgBtns{ display:flex; flex-direction:column; gap:8px; align-items:stretch; justify-content:flex-start; }
-
+.imgPlaceholder{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:10px;
+  font-size:12px;
+  line-height:1.25;
+  color: var(--muted);
+}
 .qRow{
   display:grid;
   grid-template-columns: 1fr 46px;
