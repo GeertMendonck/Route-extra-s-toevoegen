@@ -102,13 +102,18 @@
     <div class="sectionTitle">Afbeeldingen (prestart.images)</div>
     <div id="pre_images"></div>
 
-    <div class="row">
-      <label class="btn ghost">
-        Voeg afbeelding toe…
-        <input id="pre_addImageFile" type="file" accept="image/*" hidden>
-      </label>
-      <div class="hint">Tip: zet je echte bestanden in <code>/assets/img/</code> en gebruik die bestandsnaam.</div>
-    </div>
+    <div class="dropzone" id="pre_dropzone">
+  <div class="dzText">
+    <strong>Sleep een afbeelding hierheen</strong><br>
+    Preview: enkel nieuw toegevoegde foto’s worden getoond. Zet daarna het bestand in <code>/assets/img/</code>.
+    <br>Tip: gebruik liefst foto’s in <b>landscape</b>.
+  </div>
+  <label class="btn ghost">
+    Kies bestand…
+    <input id="pre_addImageFile" type="file" accept="image/*" hidden>
+  </label>
+</div>
+
   </template>
 
   <template id="tplLocatie">

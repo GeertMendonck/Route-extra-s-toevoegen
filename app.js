@@ -88,6 +88,26 @@
     if(lat==null || lng==null) return '#';
     return 'https://www.google.com/maps?q=' + encodeURIComponent(lat + ',' + lng);
   }
+    function bindDropzone(zoneEl, onFiles){
+    if(!zoneEl) return;
+
+    zoneEl.addEventListener('dragover', function(e){
+        e.preventDefault();
+        zoneEl.classList.add('dragover');
+    });
+    zoneEl.addEventListener('dragleave', function(){
+        zoneEl.classList.remove('dragover');
+    });
+    zoneEl.addEventListener('drop', function(e){
+        e.preventDefault();
+        zoneEl.classList.remove('dragover');
+
+        var files = e.dataTransfer && e.dataTransfer.files;
+        if(files && files.length){
+        onFiles(files);
+        }
+    });
+}
 
   // ---------------- Navigation ----------------
   function renderLocList(filterText){
@@ -323,6 +343,26 @@
 
       // add image file
       var addInp = qs('pre_addImageFile');
+      var dz = qs('pre_dropzone');
+        bindDropzone(dz, function(files){
+        // voeg allemaal toe
+        for(var i=0;i<files.length;i++){
+            (function(file){
+            // “fake” file input flow hergebruiken
+            var idx = DATA.prestart.images.length;
+            DATA.prestart.images.push({ file: file.name || 'image.jpg', credit: '' });
+
+            var reader = new FileReader();
+            reader.onload = function(){
+                previewCache['prestart|' + idx] = reader.result;
+                renderEditor();
+            };
+      reader.readAsDataURL(file);
+    })(files[i]);
+  }
+  renderEditor();
+});
+
       addInp.addEventListener('change', function(){
         handleAddImageFile(addInp, DATA.prestart.images, 'prestart', function(newArr){
           DATA.prestart.images = newArr;
