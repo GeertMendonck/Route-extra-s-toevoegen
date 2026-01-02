@@ -426,6 +426,24 @@
     });
 
     var addInp2 = qs('loc_addImageFile');
+            var dz2 = qs('loc_dropzone');
+        bindDropzone(dz2, function(files){
+        for(var i=0;i<files.length;i++){
+            (function(file){
+            var idx = loc.images.length;
+            loc.images.push({ file: file.name || 'image.jpg', credit: '' });
+
+            var reader = new FileReader();
+            reader.onload = function(){
+                previewCache['loc:' + loc.id + '|' + idx] = reader.result;
+                renderEditor();
+            };
+            reader.readAsDataURL(file);
+            })(files[i]);
+        }
+        renderEditor();
+});
+
     addInp2.addEventListener('change', function(){
       handleAddImageFile(addInp2, loc.images, 'loc:' + loc.id, function(newArr){
         loc.images = newArr;
