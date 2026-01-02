@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Route JSON Editor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🧭</div>
+      <div>
+        <div class="title">Route JSON Editor</div>
+        <div class="subtitle">prestart + locaties (images & vragen)</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <label class="btn ghost">
+        JSON laden…
+        <input id="fileJson" type="file" accept="application/json" hidden>
+      </label>
+      <button class="btn" id="btnDownload" disabled>Download JSON</button>
+      <button class="btn ghost" id="btnCopy" disabled>Kopieer JSON</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="card">
+        <div class="cardTitle">Meta</div>
+        <div class="field">
+          <label>Titel</label>
+          <input id="metaTitle" type="text" placeholder="Titel…" disabled>
+        </div>
+        <div class="field">
+          <label>Subtitel</label>
+          <input id="metaSubtitle" type="text" placeholder="Subtitel…" disabled>
+        </div>
+        <div class="field">
+          <label>Versie</label>
+          <input id="metaVersion" type="text" placeholder="1.0" disabled>
+        </div>
+        <div class="hint" id="metaHint">Laad eerst een JSON-bestand.</div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">Navigatie</div>
+        <div class="tabs">
+          <button class="tab active" data-tab="prestart">Prestart</button>
+          <button class="tab" data-tab="locaties">Locaties</button>
+        </div>
+
+        <div id="navPrestart" class="navPane">
+          <button class="navItem active" id="navPrestartBtn">⚑ Prestart</button>
+        </div>
+
+        <div id="navLocaties" class="navPane hidden">
+          <input id="searchLoc" class="search" type="text" placeholder="Zoek locatie…" disabled>
+          <div id="locList" class="list"></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="card" id="editorCard">
+        <div class="cardTitle" id="editorTitle">Editor</div>
+        <div class="hint">Laad een JSON om te starten.</div>
+      </div>
+    </section>
+  </main>
+
+  <template id="tplPrestart">
+    <div class="grid2">
+      <div class="field">
+        <label>useLocationId</label>
+        <input id="pre_useLocationId" type="text" placeholder="start_menenpoort">
+      </div>
+      <div class="field">
+        <label>Meeting point label</label>
+        <input id="pre_meetingLabel" type="text" placeholder="Onder de boog">
+      </div>
+
+      <div class="field">
+        <label>Meeting point lat</label>
+        <input id="pre_meetingLat" type="number" step="0.00001">
+      </div>
+      <div class="field">
+        <label>Meeting point lng</label>
+        <input id="pre_meetingLng" type="number" step="0.00001">
+      </div>
+
+      <div class="field span2">
+        <label>Message</label>
+        <textarea id="pre_message" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="sectionTitle">Afbeeldingen (prestart.images)</div>
+    <div id="pre_images"></div>
+
+    <div class="row">
+      <label class="btn ghost">
+        Voeg afbeelding toe…
+        <input id="pre_addImageFile" type="file" accept="image/*" hidden>
+      </label>
+      <div class="hint">Tip: zet je echte bestanden in <code>/assets/img/</code> en gebruik die bestandsnaam.</div>
+    </div>
+  </template>
+
+  <template id="tplLocatie">
+    <div class="grid2">
+      <div class="field">
+        <label>id</label>
+        <input id="loc_id" type="text" disabled>
+      </div>
+      <div class="field">
+        <label>slot</label>
+        <input id="loc_slot" type="text">
+      </div>
+
+      <div class="field span2">
+        <label>naam</label>
+        <input id="loc_naam" type="text">
+      </div>
+
+      <div class="field">
+        <label>lat</label>
+        <input id="loc_lat" type="number" step="0.00001">
+      </div>
+      <div class="field">
+        <label>lng</label>
+        <input id="loc_lng" type="number" step="0.00001">
+      </div>
+
+      <div class="field">
+        <label>radius</label>
+        <input id="loc_radius" type="number" step="1">
+      </div>
+      <div class="field">
+        <label>(preview) kaartlink</label>
+        <a id="loc_mapLink" class="link" href="#" target="_blank" rel="noopener">Open in Google Maps</a>
+      </div>
+
+      <div class="field span2">
+        <label>routeHint</label>
+        <textarea id="loc_routeHint" rows="3"></textarea>
+      </div>
+
+      <div class="field">
+        <label>uitleg.kort</label>
+        <textarea id="loc_uitlegKort" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>uitleg.uitgebreid</label>
+        <textarea id="loc_uitlegLang" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="sectionTitle">Afbeeldingen (locatie.images)</div>
+    <div id="loc_images"></div>
+    <div class="row">
+      <label class="btn ghost">
+        Voeg afbeelding toe…
+        <input id="loc_addImageFile" type="file" accept="image/*" hidden>
+      </label>
+      <div class="hint">Bestandsnaam wordt ingevuld; jij zet het bestand in je repo.</div>
+    </div>
+
+    <div class="sectionTitle">Vragen (locatie.vragen)</div>
+    <div id="loc_vragen"></div>
+    <div class="row">
+      <button class="btn ghost" id="loc_addVraag">+ Voeg vraag toe</button>
+      <div class="hint">Sleepen is nog niet voorzien — maar je kan wel “omhoog/omlaag”. (We zijn beschaafde mensen.)</div>
+    </div>
+  </template>
+
+  <template id="tplImageRow">
+    <div class="imgRow">
+      <div class="imgPreview">
+        <img class="imgTag" alt="">
+      </div>
+      <div class="imgFields">
+        <div class="field">
+          <label>file</label>
+          <input class="imgFile" type="text" placeholder="menenpoort.jpg">
+        </div>
+        <div class="field">
+          <label>credit</label>
+          <input class="imgCredit" type="text" placeholder="© …">
+        </div>
+        <div class="field">
+          <label>caption (optioneel)</label>
+          <input class="imgCaption" type="text" placeholder="Korte caption…">
+        </div>
+      </div>
+      <div class="imgBtns">
+        <button class="btn ghost small imgUp" title="Omhoog">↑</button>
+        <button class="btn ghost small imgDown" title="Omlaag">↓</button>
+        <button class="btn danger small imgDel" title="Verwijder">✕</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="tplVraagRow">
+    <div class="qRow">
+      <textarea class="qText" rows="2" placeholder="Typ je vraag…"></textarea>
+      <div class="qBtns">
+        <button class="btn ghost small qUp" title="Omhoog">↑</button>
+        <button class="btn ghost small qDown" title="Omlaag">↓</button>
+        <button class="btn danger small qDel" title="Verwijder">✕</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
