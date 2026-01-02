@@ -47,6 +47,13 @@
           <input id="metaVersion" type="text" placeholder="1.0" disabled>
         </div>
 
+        <!-- ✅ NIEUW: assetsBase -->
+        <div class="field">
+          <label>assetsBase (GitHub Pages route-root)</label>
+          <input id="metaAssetsBase" type="text" placeholder="https://geertmendonck.github.io/Geo-afbeeldingen/wo1/" disabled>
+          <div class="hint mini">De editor gebruikt automatisch <code>images/</code> onder deze URL.</div>
+        </div>
+
         <div class="hint" id="metaHint">Laad eerst een JSON-bestand.</div>
       </div>
 
@@ -88,12 +95,12 @@
     <div class="grid2">
       <div class="field">
         <label>useLocationId</label>
-        <input id="pre_useLocationId" type="text" placeholder="start_menenpoort">
+        <input id="pre_useLocationId" type="text" placeholder="start_positie">
       </div>
 
       <div class="field">
         <label>Meeting point label</label>
-        <input id="pre_meetingLabel" type="text" placeholder="Onder de boog">
+        <input id="pre_meetingLabel" type="text" placeholder="Aan de deur">
       </div>
 
       <div class="field">
@@ -115,13 +122,31 @@
     <div class="sectionTitle">Afbeeldingen (prestart.images)</div>
     <div id="pre_images"></div>
 
+    <!-- ✅ Prestart picker -->
     <div class="dropzone" id="pre_dropzone">
       <div class="dzText">
         <strong>Sleep een afbeelding hierheen</strong><br>
-        Preview: enkel nieuw toegevoegde foto’s worden getoond. Zet daarna het bestand in <code>/assets/img/</code>.
+        Preview: enkel nieuw toegevoegde foto’s worden getoond. Zet daarna het bestand in de repo-map <code>images/</code> (GitHub Pages).
         <br>Tip: gebruik liefst foto’s in <b>landscape</b>.
       </div>
-      <label class="btn ghost">
+
+      <div class="pickRow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+        <select id="pre_imgSelect" class="input" style="min-width:220px">
+          <option value="">Kies uit lijst…</option>
+        </select>
+
+        <input id="pre_imgName" class="input" type="text"
+               placeholder="of typ bestandsnaam (bv. menenpoort.jpg)"
+               style="min-width:260px">
+      </div>
+
+      <div id="pre_imgHint" class="mini" style="margin-top:6px;opacity:.85"></div>
+
+      <img id="pre_imgPreview"
+           style="display:none;max-width:100%;border-radius:12px;margin-top:8px"
+           alt="">
+
+      <label class="btn ghost" style="margin-top:10px;display:inline-block">
         Kies bestand…
         <input id="pre_addImageFile" type="file" accept="image/*" hidden>
       </label>
@@ -188,13 +213,31 @@
     <div class="sectionTitle">Afbeeldingen (locatie.images)</div>
     <div id="loc_images"></div>
 
+    <!-- ✅ Locatie picker (zelfde idee als prestart) -->
     <div class="dropzone" id="loc_dropzone">
       <div class="dzText">
         <strong>Sleep een afbeelding hierheen</strong><br>
-        Preview: enkel nieuw toegevoegde foto’s worden getoond. Zet daarna het bestand in <code>/assets/img/</code>.
+        Preview: enkel nieuw toegevoegde foto’s worden getoond. Zet daarna het bestand in de repo-map <code>images/</code> (GitHub Pages).
         <br>Tip: gebruik liefst foto’s in <b>landscape</b>.
       </div>
-      <label class="btn ghost">
+
+      <div class="pickRow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+        <select id="loc_imgSelect" class="input" style="min-width:220px">
+          <option value="">Kies uit lijst…</option>
+        </select>
+
+        <input id="loc_imgName" class="input" type="text"
+               placeholder="of typ bestandsnaam (bv. stop01.jpg)"
+               style="min-width:260px">
+      </div>
+
+      <div id="loc_imgHint" class="mini" style="margin-top:6px;opacity:.85"></div>
+
+      <img id="loc_imgPreview"
+           style="display:none;max-width:100%;border-radius:12px;margin-top:8px"
+           alt="">
+
+      <label class="btn ghost" style="margin-top:10px;display:inline-block">
         Kies bestand…
         <input id="loc_addImageFile" type="file" accept="image/*" hidden>
       </label>
@@ -214,7 +257,6 @@
     <div class="imgRow">
       <div class="imgPreview">
         <img class="imgTag" alt="">
-        <!-- placeholder wordt via JS toegevoegd indien nodig -->
       </div>
 
       <div class="imgFields">
@@ -256,5 +298,4 @@
 
   <script src="app.js"></script>
 </body>
-
 </html>

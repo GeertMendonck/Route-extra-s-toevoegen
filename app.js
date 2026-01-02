@@ -43,6 +43,295 @@
   function prettyJson(){
     return JSON.stringify(DATA, null, 2);
   }
+        function loadImagesIndex(cb){
+        try{
+            var base = DATA && DATA.meta && DATA.meta.assetsBase ? String(DATA.meta.assetsBase) : '';
+            if(!base) return cb(new Error('assetsBase ontbreekt'));
+
+            var url = base.replace(/\/+$/,'') + '/images/index.json?v=' + Date.now();
+
+            fetch(url).then(function(r){
+            if(!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+            }).then(function(obj){
+            var files = (obj && obj.files && obj.files.length) ? obj.files.slice() : [];
+            cb(null, files);
+            }).catch(function(err){
+            cb(err);
+            });
+        }catch(e){
+            cb(e);
+        }
+        }
+  var __imagesIndexCache = null;
+var __imagesIndexCacheAt = 0;
+
+function loadImagesIndex(cb){
+  try{
+    var base = DATA && DATA.meta && DATA.meta.assetsBase ? String(DATA.meta.assetsBase).trim() : '';
+    if(!base) return cb(new Error('assetsBase ontbreekt'));
+
+    // simpele cache (10s) zodat renderEditor() niet telkens fetch doet
+    var now = Date.now();
+    if(__imagesIndexCache && (now - __imagesIndexCacheAt) < 10000){
+      return cb(null, __imagesIndexCache);
+    }
+
+    var url = base.replace(/\/+$/,'') + '/images/index.json?v=' + now;
+
+    fetch(url).then(function(r){
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(obj){
+      var files = (obj && obj.files && obj.files.length) ? obj.files.slice() : [];
+      __imagesIndexCache = files;
+      __imagesIndexCacheAt = now;
+      cb(null, files);
+    }).catch(function(err){
+      cb(err);
+    });
+  }catch(e){
+    cb(e);
+  }
+}
+function bindImagePickerUI(selEl, txtEl, hintEl, previewEl, fileInputEl, arr, cachePrefix){
+  if(!selEl && !txtEl && !fileInputEl) return;
+
+  function setHint(msg){
+    if(hintEl) hintEl.textContent = msg || '';
+  }
+
+  function setPreviewByName(name){
+    if(!previewEl) return;
+    name = String(name||'').trim();
+    if(!name){
+      previewEl.style.display = 'none';
+      previewEl.src = '';
+      return;
+    }
+    previewEl.style.display = 'block';
+    previewEl.src = resolveImageFile(name, DATA);
+    previewEl.onerror = function(){
+      previewEl.onerror = null;
+      previewEl.style.display = 'none';
+      setHint('⚠️ Bestand niet gevonden op GitHub. Upload "' + name + '" naar images/ en commit & push.');
+    };
+  }
+
+  function applyName(name, origin){
+    name = String(name||'').trim();
+    if(!name) return;
+
+    // voeg toe als nieuwe rij (zodat je het in je list editor ziet)
+    arr.push({ file: name, credit:'' });
+
+    // previewCache: toon lokaal preview enkel voor dropped files (origin === 'drop')
+    if(origin === 'drop'){
+      setHint('📌 Lokaal gekozen. Upload "' + name + '" nog naar images/ in je GitHub afbeeldingen-repo.');
+      // preview via cache gebeurt in addImagesFromFiles; hier tonen we alvast remote preview-poging
+    } else {
+      setHint('');
+    }
+
+    // 1 rerender zodat buildImagesEditor de nieuwe rij toont
+    renderEditor();
+  }
+
+  // combobox vullen
+  if(selEl){
+    selEl.disabled = true;
+    selEl.innerHTML = '<option value="">Kies uit lijst…</option>';
+
+    var base = DATA && DATA.meta && DATA.meta.assetsBase ? String(DATA.meta.assetsBase).trim() : '';
+    if(!base){
+      setHint('ℹ️ Vul eerst meta.assetsBase in. Zonder dat kunnen we images/index.json niet laden.');
+    } else {
+      loadImagesIndex(function(err, files){
+        if(err){
+          selEl.disabled = true;
+          setHint('ℹ️ Geen images/index.json gevonden. Typ een bestandsnaam of sleep een foto (en upload daarna naar GitHub).');
+          return;
+        }
+        selEl.disabled = false;
+        for(var i=0;i<files.length;i++){
+          var opt = document.createElement('option');
+          opt.value = files[i];
+          opt.textContent = files[i];
+          selEl.appendChild(opt);
+        }
+      });
+    }
+
+    selEl.addEventListener('change', function(){
+      if(this.value){
+        applyName(this.value, 'select');
+        this.value = ''; // reset zodat je opnieuw kan kiezen
+      }
+    });
+  }
+
+  // typen
+  if(txtEl){
+    txtEl.addEventListener('change', function(){
+      var v = String(this.value||'').trim();
+      if(v){
+        applyName(v, 'typed');
+        this.value = '';
+      }
+    });
+
+    // optioneel: live preview terwijl je typt
+    txtEl.addEventListener('input', function(){
+      setPreviewByName(this.value);
+    });
+  }
+
+  // file picker (neemt naam, maar jouw bestaande addImagesFromFiles regelt previewCache)
+  if(fileInputEl){
+    fileInputEl.addEventListener('change', function(){
+      // jouw bestaande handler blijft ook bestaan; dus hier NIET dubbel afhandelen
+      // wél: live hint/preview als iemand enkel via picker iets kiest maar je handler faalt
+      var f = fileInputEl.files && fileInputEl.files[0];
+      if(f && f.name){
+        setHint('📌 Lokaal gekozen. Upload "' + f.name + '" nog naar images/ in je GitHub afbeeldingen-repo.');
+      }
+    });
+  }
+
+  // init preview leeg
+  setPreviewByName('');
+}
+
+    function ensureLastImageObj(arr){
+  arr = safeArr(arr);
+  if(!arr.length) arr.push({ file:'', credit:'' });
+  return arr[arr.length - 1];
+}
+  
+function bindImagePicker(rootEl, getFile, setFile){
+  var sel  = rootEl.querySelector('.imgPickSelect');
+  var txt  = rootEl.querySelector('.imgPickText');
+  var drop = rootEl.querySelector('.imgDrop');
+  var fin  = rootEl.querySelector('.fileInput');
+  var hint = rootEl.querySelector('.imgHint');
+  var prev = rootEl.querySelector('.imgPreview');
+
+  function setHint(msg){
+    if(hint) hint.textContent = msg || '';
+  }
+
+  function updatePreview(){
+    var f = getFile();
+    if(!prev) return;
+
+    if(!f){
+      prev.style.display = 'none';
+      prev.src = '';
+      return;
+    }
+
+    // preview via jouw resolver (optie 2)
+    var url = resolveImageFile(f, DATA);
+
+    prev.style.display = 'block';
+    prev.src = url;
+    prev.onerror = function(){
+      prev.onerror = null;
+      prev.style.display = 'none';
+      setHint('⚠️ Bestand niet gevonden op GitHub. Upload "' + f + '" naar images/ en commit & push.');
+    };
+  }
+
+  function applyFile(name, origin){
+    name = String(name || '').trim();
+    setFile(name);
+    if(txt) txt.value = name;
+
+    if(origin === 'dropped' && name){
+      setHint('📌 Je sleepte een foto. Upload "' + name + '" nog naar images/ en commit & push.');
+    } else {
+      setHint('');
+    }
+
+    updatePreview();
+    // indien je validation/render wil triggeren:
+    // renderValidation();
+  }
+
+  // combobox vullen (als mogelijk)
+  if(sel){
+    sel.innerHTML = '<option value="">Kies uit lijst…</option>';
+    sel.disabled = true;
+
+    loadImagesIndex(function(err, files){
+      if(err){
+        sel.disabled = true;
+        setHint('ℹ️ Geen images/index.json gevonden. Typ een bestandsnaam of sleep een foto (en upload later naar GitHub).');
+        return;
+      }
+      sel.disabled = false;
+      for(var i=0;i<files.length;i++){
+        var opt = document.createElement('option');
+        opt.value = files[i];
+        opt.textContent = files[i];
+        sel.appendChild(opt);
+      }
+      // selecteer huidige waarde
+      var cur = getFile();
+      if(cur) sel.value = cur;
+    });
+
+    sel.addEventListener('change', function(){
+      if(this.value) applyFile(this.value, 'select');
+    });
+  }
+
+  // typen
+  if(txt){
+    txt.value = getFile() || '';
+    txt.addEventListener('input', function(){
+      applyFile(this.value, 'typed');
+    });
+  }
+
+  // drag & drop + file picker (we nemen enkel de naam over)
+  function openFilePicker(){
+    if(fin) fin.click();
+  }
+
+  if(drop){
+    drop.addEventListener('click', openFilePicker);
+
+    drop.addEventListener('dragover', function(e){
+      e.preventDefault();
+      drop.classList.add('drag');
+    });
+    drop.addEventListener('dragleave', function(){
+      drop.classList.remove('drag');
+    });
+    drop.addEventListener('drop', function(e){
+      e.preventDefault();
+      drop.classList.remove('drag');
+
+      var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if(!file) return;
+
+      applyFile(file.name, 'dropped');
+    });
+  }
+
+  if(fin){
+    fin.addEventListener('change', function(){
+      var file = fin.files && fin.files[0];
+      if(file) applyFile(file.name, 'dropped');
+      fin.value = '';
+    });
+  }
+
+  updatePreview();
+}
+
+
 
   function download(filename, text){
     var blob = new Blob([text], {type:'application/json'});
@@ -76,11 +365,11 @@
   }
 
   function imgUrlFromFileField(fileValue){
-    // fileValue kan "menenpoort.jpg" zijn → toon als /assets/img/menenpoort.jpg
-    // als user al "assets/img/..." invult, respecteer dat
+    // fileValue kan "menenpoort.jpg" zijn → toon als /images/menenpoort.jpg
+    // als user al "/images/..." invult, respecteer dat
     if(!fileValue) return '';
     if(/^https?:\/\//i.test(fileValue)) return fileValue;
-    if(fileValue.indexOf('/') >= 0) return fileValue; // bv assets/img/x.jpg
+    if(fileValue.indexOf('/') >= 0) return fileValue; // bv images/x.jpg
     return 'assets/img/' + fileValue;
   }
 
@@ -398,6 +687,21 @@ function renderEditor(){
         });
       });
     }
+// ✅ combobox + naam-input + preview
+var pre_imgSelect  = body.querySelector('#pre_imgSelect');
+var pre_imgName    = body.querySelector('#pre_imgName');
+var pre_imgHint    = body.querySelector('#pre_imgHint');
+var pre_imgPreview = body.querySelector('#pre_imgPreview');
+
+bindImagePickerUI(
+  pre_imgSelect,
+  pre_imgName,
+  pre_imgHint,
+  pre_imgPreview,
+  pre_addImageFile,
+  DATA.prestart.images,
+  'prestart'
+);
 
     // drag & drop
     if(pre_dropzone){
@@ -499,6 +803,21 @@ function renderEditor(){
       addImagesFromFiles(files, loc.images, 'loc:' + loc.id);
     });
   }
+// ✅ combobox + naam-input + preview
+var loc_imgSelect  = body.querySelector('#loc_imgSelect');
+var loc_imgName    = body.querySelector('#loc_imgName');
+var loc_imgHint    = body.querySelector('#loc_imgHint');
+var loc_imgPreview = body.querySelector('#loc_imgPreview');
+
+bindImagePickerUI(
+  loc_imgSelect,
+  loc_imgName,
+  loc_imgHint,
+  loc_imgPreview,
+  loc_addImageFile,
+  loc.images,
+  'loc:' + loc.id
+);
 
   // vragen
   buildVragenEditor(locVragenEl, loc.vragen, function(newArr){
