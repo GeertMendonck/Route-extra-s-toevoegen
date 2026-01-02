@@ -364,14 +364,22 @@ function bindImagePicker(rootEl, getFile, setFile){
     setTimeout(function(){ t.remove(); }, 1800);
   }
 
-  function imgUrlFromFileField(fileValue){
-    // fileValue kan "menenpoort.jpg" zijn → toon als /images/menenpoort.jpg
-    // als user al "/images/..." invult, respecteer dat
-    if(!fileValue) return '';
-    if(/^https?:\/\//i.test(fileValue)) return fileValue;
-    if(fileValue.indexOf('/') >= 0) return fileValue; // bv images/x.jpg
-    return 'assets/img/' + fileValue;
-  }
+//  function imgUrlFromFileField(file){
+//   file = String(file || '').trim();
+//   if(!file) return '';
+
+//   // absolute url toelaten
+//   if(/^https?:\/\//i.test(file)) return file;
+
+//   // assetsBase verplicht in jouw nieuwe model
+//   var base = (DATA && DATA.meta && DATA.meta.assetsBase) ? String(DATA.meta.assetsBase).trim() : '';
+//   if(!base) return '';
+
+//   base = base.replace(/\/+$/,'') + '/';
+//   file = file.replace(/^\/+/,'');
+//   return base + 'images/' + file;
+// }
+
 
   function makeMapLink(lat,lng){
     if(lat==null || lng==null) return '#';
@@ -458,37 +466,46 @@ function bindImagePicker(rootEl, getFile, setFile){
       inpCredit.value = img.credit || '';
       inpCaption.value = img.caption || '';
 
-      // preview: prefer cache (local chosen file), else guess by file path in repo
-      var cacheKey = contextKey + '|' + idx;
-      // placeholder node
-        var ph = el('div','imgPlaceholder');
-        ph.textContent = 'Preview: enkel nieuw toegevoegde foto’s worden getoond (tot je ze in /assets/img plaatst).';
+ // preview: prefer cache (local chosen file), else remote via assetsBase/images/
+var cacheKey = contextKey + '|' + idx;
 
-        function showPlaceholder(){
-        imgTag.removeAttribute('src');
-        if(!previewBox.querySelector('.imgPlaceholder')){
-            previewBox.appendChild(ph);
-        }
-        }
-        function hidePlaceholder(){
-        var p = previewBox.querySelector('.imgPlaceholder');
-        if(p) p.remove();
-        }
+// placeholder node
+var ph = el('div','imgPlaceholder');
+ph.textContent = 'Preview: enkel nieuw toegevoegde foto’s worden getoond. Upload het bestand daarna naar de repo-map images/ (GitHub Pages).';
 
-        var cached = previewCache[cacheKey];
-        var src = cached || imgUrlFromFileField(img.file || '');
+function showPlaceholder(){
+  imgTag.removeAttribute('src');
+  if(!previewBox.querySelector('.imgPlaceholder')){
+    previewBox.appendChild(ph);
+  }
+}
+function hidePlaceholder(){
+  var p = previewBox.querySelector('.imgPlaceholder');
+  if(p) p.remove();
+}
 
-        if(src){
-        imgTag.src = src;
-        hidePlaceholder();
+function remoteSrc(){
+  var f = (img && img.file) ? String(img.file).trim() : '';
+  if(!f) return '';
+  // ✅ jouw nieuwe model: assetsBase + images/ + file
+  return resolveImageFile(f, DATA);
+}
 
-        // als browser het niet kan laden -> placeholder tonen
-        imgTag.onerror = function(){
-            showPlaceholder();
-        };
-        }else{
-        showPlaceholder();
-        }
+var cached = previewCache[cacheKey];
+var src = cached || remoteSrc();
+
+if(src){
+  imgTag.src = src;
+  hidePlaceholder();
+
+  imgTag.onerror = function(){
+    // remote faalt of cached is ongeldig
+    showPlaceholder();
+  };
+}else{
+  showPlaceholder();
+}
+
       function commit(){
         img.file = inpFile.value.trim();
         img.credit = inpCredit.value.trim();
@@ -498,9 +515,16 @@ function bindImagePicker(rootEl, getFile, setFile){
         onChange(images);
         // update preview from file field if no cached preview
         if(!previewCache[cacheKey]){
-          var s = imgUrlFromFileField(img.file || '');
-          if(s) imgTag.src = s;
+        var s = remoteSrc();
+        if(s){
+            imgTag.src = s;
+            hidePlaceholder();
+            imgTag.onerror = function(){ showPlaceholder(); };
+        }else{
+            showPlaceholder();
         }
+        }
+
       }
 
       inpFile.addEventListener('input', commit);
@@ -530,6 +554,28 @@ function bindImagePicker(rootEl, getFile, setFile){
       container.appendChild(row);
     });
   }
+  function resolveImageFile(file, data){
+  file = String(file || '').trim();
+  if(!file) return '';
+
+  // absolute URL’s laten passeren
+  if(/^https?:\/\//i.test(file)) return file;
+
+  // assetsBase is de route-root
+  var base = (data && data.meta && data.meta.assetsBase) ? String(data.meta.assetsBase).trim() : '';
+  if(!base) return '';
+
+  // trailing slash normaliseren
+  base = base.replace(/\/+$/,'') + '/';
+
+  // geen leading slash in file
+  file = file.replace(/^\/+/,'');
+  // veiligheid: als iemand toch 'images/...' invult, haal het weg om dubbel te vermijden
+  file = file.replace(/^images\//i, '');
+
+  return base + 'images/' + file;
+}
+
 
   function handleAddImageFile(fileInput, imagesArray, contextKey, onChange){
     var f = fileInput.files && fileInput.files[0];
