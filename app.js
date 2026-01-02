@@ -63,33 +63,38 @@
             cb(e);
         }
         }
-  var __imagesIndexCache = null;
-var __imagesIndexCacheAt = 0;
+        var __imagesIndexCache = null;
+        var __imagesIndexCacheAt = 0;
+        var __imagesIndexCacheBase = '';
 
 function loadImagesIndex(cb){
   try{
-    var base = DATA && DATA.meta && DATA.meta.assetsBase ? String(DATA.meta.assetsBase).trim() : '';
-    if(!base) return cb(new Error('assetsBase ontbreekt'));
+        var base = DATA && DATA.meta && DATA.meta.assetsBase ? String(DATA.meta.assetsBase).trim() : '';
+        if(!base) return cb(new Error('assetsBase ontbreekt'));
 
-    // simpele cache (10s) zodat renderEditor() niet telkens fetch doet
-    var now = Date.now();
-    if(__imagesIndexCache && (now - __imagesIndexCacheAt) < 10000){
-      return cb(null, __imagesIndexCache);
-    }
+        base = base.replace(/\/+$/,'') + '/';
 
-    var url = base.replace(/\/+$/,'') + '/images/index.json?v=' + now;
+        var now = Date.now();
 
-    fetch(url).then(function(r){
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function(obj){
-      var files = (obj && obj.files && obj.files.length) ? obj.files.slice() : [];
-      __imagesIndexCache = files;
-      __imagesIndexCacheAt = now;
-      cb(null, files);
-    }).catch(function(err){
-      cb(err);
-    });
+        // ✅ cache alleen gebruiken als assetsBase dezelfde is
+        if(__imagesIndexCache && __imagesIndexCacheBase === base && (now - __imagesIndexCacheAt) < 10000){
+        return cb(null, __imagesIndexCache);
+        }
+
+        var url = base + 'images/index.json?v=' + now;
+
+        fetch(url).then(function(r){
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+        }).then(function(obj){
+        var files = (obj && obj.files && obj.files.length) ? obj.files.slice() : [];
+        __imagesIndexCache = files;
+        __imagesIndexCacheAt = now;
+        __imagesIndexCacheBase = base; // ✅ onthoud bij welke base dit hoort
+        cb(null, files);
+        }).catch(function(err){
+        cb(err);
+        });
   }catch(e){
     cb(e);
   }
