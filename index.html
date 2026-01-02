@@ -246,10 +246,36 @@
     <div class="sectionTitle">Vragen (locatie.vragen)</div>
     <div id="loc_vragen"></div>
 
-    <div class="row">
-      <button class="btn ghost" id="loc_addVraag">+ Voeg vraag toe</button>
-      <div class="hint">Sleepen is nog niet voorzien — maar je kan wel “omhoog/omlaag”.</div>
+ <div class="row" style="gap:10px;align-items:flex-start;flex-wrap:wrap">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn ghost" id="q_addOpen" title="Open vraag toevoegen">+ OPEN</button>
+
+    <div class="dd" style="position:relative;display:inline-block">
+      <button class="btn ghost" id="q_addOther" title="Voeg ANDER toe (laatste keuze)">+ ANDER</button>
+      <button class="btn ghost small" id="q_otherMenuBtn" title="Kies type">▾</button>
+      <div class="ddMenu hidden" id="q_otherMenu" style="position:absolute;z-index:50;min-width:200px;margin-top:6px">
+        <button class="ddItem" data-qtype="mc">Multiple choice</button>
+        <button class="ddItem" data-qtype="checkbox">Checkbox</button>
+        <!-- later: schaal, rangschik, ... -->
+      </div>
     </div>
+
+    <div class="dd" style="position:relative;display:inline-block">
+      <button class="btn ghost" id="q_addMedia" title="Voeg MEDIA toe (laatste keuze)">+ MEDIA</button>
+      <button class="btn ghost small" id="q_mediaMenuBtn" title="Kies type">▾</button>
+      <div class="ddMenu hidden" id="q_mediaMenu" style="position:absolute;z-index:50;min-width:200px;margin-top:6px">
+        <button class="ddItem" data-qtype="photo">Foto-opdracht</button>
+        <button class="ddItem" data-qtype="audio">Audio-opname</button>
+        <!-- later: video, scan, ... -->
+      </div>
+    </div>
+  </div>
+
+  <div class="hint" style="flex:1;min-width:260px">
+    Sleepen is nog niet voorzien — maar je kan wel “omhoog/omlaag”.
+  </div>
+</div>
+
   </template>
 
   <!-- IMAGE ROW TEMPLATE -->

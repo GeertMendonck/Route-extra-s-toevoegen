@@ -5,6 +5,11 @@
   var DATA = null;
   var currentView = 'prestart'; // 'prestart' | 'loc'
   var currentLocId = null;
+// onthoud laatste subtype per categorie (sessie)
+var lastQType = {
+  other: 'mc',
+  media: 'photo'
+};
 
   // preview cache: key = "prestart|loc:<id>" + index => dataUrl
   var previewCache = Object.create(null);
@@ -604,42 +609,114 @@ if(src){
   }
 
   // ---------------- Questions editor ----------------
-  function buildVragenEditor(container, vragenArr, onChange){
-    container.innerHTML = '';
-    var vragen = safeArr(vragenArr);
+ function buildVragenEditor(container, vragenArr, onChange){
+  container.innerHTML = '';
+  var vragenRaw = safeArr(vragenArr);
 
-    vragen.forEach(function(txt, idx){
-      var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
-      var ta = row.querySelector('.qText');
-      ta.value = (txt==null?'':String(txt));
+  // normaliseer: string -> object
+  var vragen = vragenRaw.map(function(v, i){
+    if(v && typeof v === 'object'){
+      // minimale defaults
+      if(!v.type) v.type = 'open';
+      if(v.vraag == null && v.text != null) v.vraag = v.text; // kleine legacy-hulp
+      if(v.vraag == null) v.vraag = '';
+      if(!v.id) v.id = genVraagId();
+      return v;
+    }
+    // string/anders -> open vraag
+    return { id: genVraagId(), type:'open', vraag:(v==null?'':String(v)) };
+  });
 
-      function commit(){
-        vragen[idx] = ta.value;
-        onChange(vragen);
-      }
-      ta.addEventListener('input', commit);
+  vragen.forEach(function(q, idx){
+    var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
+    var ta = row.querySelector('.qText');
+    ta.value = (q.vraag==null?'':String(q.vraag));
 
-      row.querySelector('.qUp').addEventListener('click', function(){
-        if(idx<=0) return;
-        var tmp = vragen[idx-1]; vragen[idx-1]=vragen[idx]; vragen[idx]=tmp;
-        onChange(vragen);
-        renderEditor();
-      });
-      row.querySelector('.qDown').addEventListener('click', function(){
-        if(idx>=vragen.length-1) return;
-        var tmp = vragen[idx+1]; vragen[idx+1]=vragen[idx]; vragen[idx]=tmp;
-        onChange(vragen);
-        renderEditor();
-      });
-      row.querySelector('.qDel').addEventListener('click', function(){
-        vragen.splice(idx,1);
-        onChange(vragen);
-        renderEditor();
-      });
+    function commit(){
+      vragen[idx].vraag = ta.value;
+      onChange(vragen);
+    }
+    ta.addEventListener('input', commit);
 
-      container.appendChild(row);
+    row.querySelector('.qUp').addEventListener('click', function(){
+      if(idx<=0) return;
+      var tmp = vragen[idx-1]; vragen[idx-1]=vragen[idx]; vragen[idx]=tmp;
+      onChange(vragen);
+      renderEditor();
     });
-  }
+    row.querySelector('.qDown').addEventListener('click', function(){
+      if(idx>=vragen.length-1) return;
+      var tmp = vragen[idx+1]; vragen[idx+1]=vragen[idx]; vragen[idx]=tmp;
+      onChange(vragen);
+      renderEditor();
+    });
+    row.querySelector('.qDel').addEventListener('click', function(){
+      vragen.splice(idx,1);
+      onChange(vragen);
+      renderEditor();
+    });
+
+    container.appendChild(row);
+  });
+}
+
+// simpele id generator (bovenaan in je script zetten)
+function genVraagId(){
+  return 'q_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
+}
+
+function normalizeVragen(arr){
+  var raw = safeArr(arr);
+  return raw.map(function(v){
+    if(v && typeof v === 'object'){
+      if(!v.id) v.id = genVraagId();
+      if(!v.type) v.type = 'open';
+      if(v.vraag == null) v.vraag = '';
+      return v;
+    }
+    return { id: genVraagId(), type:'open', vraag:(v==null?'':String(v)) };
+  });
+}
+
+function buildVragenEditor(container, vragenArr, onChange){
+  container.innerHTML = '';
+
+  // normaliseer zodat we altijd met objecten werken
+  var vragen = normalizeVragen(vragenArr);
+
+  vragen.forEach(function(q, idx){
+    var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
+    var ta = row.querySelector('.qText');
+    ta.value = (q.vraag==null?'':String(q.vraag));
+
+    function commit(){
+      vragen[idx].vraag = ta.value;
+      onChange(vragen);
+    }
+    ta.addEventListener('input', commit);
+
+    row.querySelector('.qUp').addEventListener('click', function(){
+      if(idx<=0) return;
+      var tmp = vragen[idx-1]; vragen[idx-1]=vragen[idx]; vragen[idx]=tmp;
+      onChange(vragen);
+      renderEditor();
+    });
+    row.querySelector('.qDown').addEventListener('click', function(){
+      if(idx>=vragen.length-1) return;
+      var tmp = vragen[idx+1]; vragen[idx+1]=vragen[idx]; vragen[idx]=tmp;
+      onChange(vragen);
+      renderEditor();
+    });
+    row.querySelector('.qDel').addEventListener('click', function(){
+      vragen.splice(idx,1);
+      onChange(vragen);
+      renderEditor();
+    });
+
+    container.appendChild(row);
+  });
+}
+
 
   // ---------------- Editor render ----------------
 function renderEditor(){
@@ -796,8 +873,119 @@ bindImagePickerUI(
   var loc_addImageFile = body.querySelector('#loc_addImageFile');
   var loc_dropzone  = body.querySelector('#loc_dropzone');
 
-  var locVragenEl   = body.querySelector('#loc_vragen');
-  var loc_addVraag  = body.querySelector('#loc_addVraag');
+  //var locVragenEl   = body.querySelector('#loc_vragen');
+  //var loc_addVraag  = body.querySelector('#loc_addVraag');
+var locVragenEl   = body.querySelector('#loc_vragen');
+
+// nieuwe knoppen
+var q_addOpen      = body.querySelector('#q_addOpen');
+var q_addOther     = body.querySelector('#q_addOther');
+var q_otherMenuBtn = body.querySelector('#q_otherMenuBtn');
+var q_otherMenu    = body.querySelector('#q_otherMenu');
+
+var q_addMedia     = body.querySelector('#q_addMedia');
+var q_mediaMenuBtn = body.querySelector('#q_mediaMenuBtn');
+var q_mediaMenu    = body.querySelector('#q_mediaMenu');
+
+// ensure + normaliseer zodat loc.vragen intern objecten worden
+loc.vragen = normalizeVragen(loc.vragen);
+
+// render vragen
+buildVragenEditor(locVragenEl, loc.vragen, function(newArr){
+  loc.vragen = newArr;
+});
+
+function addVraagOfType(t){
+  loc.vragen = normalizeVragen(loc.vragen); // safety
+  loc.vragen.push({ id: genVraagId(), type: t, vraag: '' });
+  renderEditor();
+}
+
+function setButtonLabels(){
+  if(q_addOther) q_addOther.textContent = '+ ANDER: ' + String(lastQType.other).toUpperCase();
+  if(q_addMedia) q_addMedia.textContent = '+ MEDIA: ' + String(lastQType.media).toUpperCase();
+}
+
+// init labels
+setButtonLabels();
+
+// direct add buttons
+if(q_addOpen){
+  q_addOpen.addEventListener('click', function(){
+    addVraagOfType('open');
+  });
+}
+if(q_addOther){
+  q_addOther.addEventListener('click', function(){
+    addVraagOfType(lastQType.other || 'mc');
+  });
+}
+if(q_addMedia){
+  q_addMedia.addEventListener('click', function(){
+    addVraagOfType(lastQType.media || 'photo');
+  });
+}
+
+// dropdown helpers
+function openMenu(menuEl){
+  if(!menuEl) return;
+  menuEl.classList.remove('hidden');
+}
+function closeMenu(menuEl){
+  if(!menuEl) return;
+  menuEl.classList.add('hidden');
+}
+function toggleMenu(menuEl){
+  if(!menuEl) return;
+  if(menuEl.classList.contains('hidden')) openMenu(menuEl);
+  else closeMenu(menuEl);
+}
+
+// menu button clicks
+if(q_otherMenuBtn){
+  q_otherMenuBtn.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    toggleMenu(q_otherMenu);
+    closeMenu(q_mediaMenu);
+  });
+}
+if(q_mediaMenuBtn){
+  q_mediaMenuBtn.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    toggleMenu(q_mediaMenu);
+    closeMenu(q_otherMenu);
+  });
+}
+
+// menu item clicks (event delegation)
+if(q_otherMenu){
+  q_otherMenu.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
+    if(!btn) return;
+    var t = btn.getAttribute('data-qtype') || 'mc';
+    lastQType.other = t;
+    setButtonLabels();
+    closeMenu(q_otherMenu);
+    addVraagOfType(t);
+  });
+}
+if(q_mediaMenu){
+  q_mediaMenu.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
+    if(!btn) return;
+    var t = btn.getAttribute('data-qtype') || 'photo';
+    lastQType.media = t;
+    setButtonLabels();
+    closeMenu(q_mediaMenu);
+    addVraagOfType(t);
+  });
+}
+
+// click outside closes menus
+document.addEventListener('click', function(){
+  closeMenu(q_otherMenu);
+  closeMenu(q_mediaMenu);
+});
 
   // ensure
   loc.uitleg = ensureObj(loc.uitleg);
