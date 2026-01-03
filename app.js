@@ -477,6 +477,35 @@ function genVraagId(){
 function genOptId(){
   return 'o_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
 }
+function makeVraagObject(type){
+  type = type || 'open';
+
+  var q = {
+    id: genVraagId(),
+    type: type,
+    vraag: '',
+    policy: clampPolicyPair({ showUntil:'beforeEnd', closeWhen:'beforeEnd' }) // default voor niet-media
+  };
+
+  if(type === 'mc' || type === 'checkbox'){
+    q.opties = [
+      { id: genOptId(), tekst:'', correct:false },
+      { id: genOptId(), tekst:'', correct:false }
+    ];
+  }
+
+  if(type === 'photo'){
+    q.media = { mode:'photo', minCount:1, maxCount:1 };
+    q.policy = clampPolicyPair({ showUntil:'inRange', closeWhen:'inRange' });
+  }
+
+  if(type === 'audio'){
+    q.media = { mode:'audio', minSeconds:10, maxSeconds:60 };
+    q.policy = clampPolicyPair({ showUntil:'inRange', closeWhen:'inRange' });
+  }
+
+  return q;
+}
 
 function normalizeOpties(optArr){
   var raw = safeArr(optArr);
