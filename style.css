@@ -317,6 +317,17 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   margin-left: 6px;      /* duwt knoppen iets naar rechts */
   flex: 0 0 auto;
 }
+.qPolicy{
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.miniField label{
+  font-size: 12px;
+  opacity: .85;
+}
 
 /* dropdown menu (vragen) */
 .ddMenu{

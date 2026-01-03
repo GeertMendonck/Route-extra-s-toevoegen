@@ -320,6 +320,30 @@
 
       <textarea class="qText" rows="2" placeholder="Typ je vraag…"></textarea>
         <div class="qWarn hidden"></div>
+        <div class="qPolicy">
+            <div class="field miniField">
+                <label>Toon tot</label>
+                <select class="qShowUntil input">
+                <option value="inRange">inRange</option>
+                <option value="nextLocation">nextLocation</option>
+                <option value="beforeEnd">beforeEnd</option>
+                <option value="afterEnd">afterEnd</option>
+                </select>
+            </div>
+
+            <div class="field miniField">
+                <label>Sluit bij</label>
+                <select class="qCloseWhen input">
+                <option value="inRange">inRange</option>
+                <option value="nextLocation">nextLocation</option>
+                <option value="beforeEnd">beforeEnd</option>
+                <option value="afterEnd">afterEnd</option>
+                </select>
+            </div>
+
+            <div class="mini qPolicyHint" style="opacity:.8;margin-top:4px"></div>
+            </div>
+
       <!-- extra: opties (enkel voor mc/checkbox) -->
       <div class="qOptions hidden">
         <div class="mini" style="opacity:.85;margin:6px 0">Opties</div>

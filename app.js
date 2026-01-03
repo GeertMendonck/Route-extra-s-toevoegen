@@ -5,11 +5,18 @@
   var DATA = null;
   var currentView = 'prestart'; // 'prestart' | 'loc'
   var currentLocId = null;
+  //wanneer moeten vragen beantwoord worden (nog niet geïmplenteerd in geo-app zelf)
+  var POLICY_ORDER = {
+  inRange: 0,
+  nextLocation: 1,
+  beforeEnd: 2,
+  afterEnd: 3
+    };
 // onthoud laatste subtype per categorie (sessie)
-var lastQType = {
-  other: 'mc',
-  media: 'photo'
-};
+    var lastQType = {
+    other: 'mc',
+    media: 'photo'
+    };
 
   // preview cache: key = "prestart|loc:<id>" + index => dataUrl
   var previewCache = Object.create(null);
@@ -661,6 +668,22 @@ if(src){
 }
 
 // simpele id generator (bovenaan in je script zetten)
+function clampPolicyPair(policy){
+  policy = ensureObj(policy);
+
+  var su = (policy.showUntil || 'nextLocation');
+  var cw = (policy.closeWhen || su);
+
+  if(POLICY_ORDER[su] == null) su = 'nextLocation';
+  if(POLICY_ORDER[cw] == null) cw = su;
+
+  // invariant: closeWhen >= showUntil
+  if(POLICY_ORDER[cw] < POLICY_ORDER[su]) cw = su;
+
+  policy.showUntil = su;
+  policy.closeWhen = cw;
+  return policy;
+}
 function genVraagId(){
   return 'q_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
 }
@@ -700,7 +723,7 @@ function normalizeVragen(arr){
       if(q.opties.length === 0) q.opties = [ { id: genOptId(), tekst:'', correct:false } ];
       if(q.shuffle == null) q.shuffle = true; // optioneel default
     }
-
+    q.policy = clampPolicyPair(q.policy);
     return q;
   });
 }
@@ -751,9 +774,9 @@ function buildVragenEditor(container, vragenArr, onChange){
 
   var vragen = normalizeVragen(vragenArr);
 
-  function commitAll(){
-    onChange(vragen);
-  }
+    function commitAll(){
+        onChange(vragen);
+    }
 
   vragen.forEach(function(q, idx){
     var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
@@ -763,6 +786,9 @@ function buildVragenEditor(container, vragenArr, onChange){
     var optBox = row.querySelector('.qOptions');
     var optList = row.querySelector('.qOptList');
     var btnAddOpt = row.querySelector('.qAddOpt');
+    var selShow = row.querySelector('.qShowUntil');
+    var selClose = row.querySelector('.qCloseWhen');
+    var polHint = row.querySelector('.qPolicyHint');
 
     // badge
     badge.textContent = String(q.type || 'open').toUpperCase();
@@ -804,6 +830,53 @@ function buildVragenEditor(container, vragenArr, onChange){
       q.opties[j].correct = !!pick.checked;
     }
     updateWarningForQuestion(q, warnEl);
+    // policy defaults (zekerheid)
+q.policy = clampPolicyPair(q.policy);
+
+function updatePolicyUI(){
+  if(selShow) selShow.value = q.policy.showUntil;
+  if(selClose) selClose.value = q.policy.closeWhen;
+
+  if(polHint){
+    if(POLICY_ORDER[q.policy.closeWhen] === POLICY_ORDER[q.policy.showUntil]){
+      polHint.textContent = '✓ Toon en sluit op hetzelfde moment.';
+    } else {
+      polHint.textContent = '✓ Vraag verdwijnt eerder, maar blijft nog geldig tot “Sluit bij”.';
+    }
+  }
+}
+
+function commitPolicy(){
+  // lees uit UI
+  var su = selShow ? selShow.value : q.policy.showUntil;
+  var cw = selClose ? selClose.value : q.policy.closeWhen;
+
+  q.policy.showUntil = su;
+  q.policy.closeWhen = cw;
+
+  // force invariant
+  q.policy = clampPolicyPair(q.policy);
+
+  // zet UI terug recht (als we moesten clampen)
+  updatePolicyUI();
+
+  commitAll();
+}
+
+if(selShow){
+  selShow.addEventListener('change', function(){
+    commitPolicy();
+  });
+}
+if(selClose){
+  selClose.addEventListener('change', function(){
+    commitPolicy();
+  });
+}
+
+// init
+updatePolicyUI();
+
     commitAll();
   });
 
