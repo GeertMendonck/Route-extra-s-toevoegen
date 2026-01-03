@@ -13,10 +13,11 @@
   afterEnd: 3
     };
 // onthoud laatste subtype per categorie (sessie)
-    var lastQType = {
-    other: 'mc',
-    media: 'photo'
-    };
+var lastQType = {
+  open: 'open',
+  ander: 'mc',
+  media: 'photo'
+};
 
   // preview cache: key = "prestart|loc:<id>" + index => dataUrl
   var previewCache = Object.create(null);
@@ -200,138 +201,6 @@ function bindImagePickerUI(selEl, txtEl, hintEl, previewEl, fileInputEl, arr)//,
   setPreviewByName('');
 }
 
-//     function ensureLastImageObj(arr){
-//   arr = safeArr(arr);
-//   if(!arr.length) arr.push({ file:'', credit:'' });
-//   return arr[arr.length - 1];
-// }
- 
-
-
-// function bindImagePicker(rootEl, getFile, setFile){
-//   var sel  = rootEl.querySelector('.imgPickSelect');
-//   var txt  = rootEl.querySelector('.imgPickText');
-//   var drop = rootEl.querySelector('.imgDrop');
-//   var fin  = rootEl.querySelector('.fileInput');
-//   var hint = rootEl.querySelector('.imgHint');
-//   var prev = rootEl.querySelector('.imgPreview');
-
-//   function setHint(msg){
-//     if(hint) hint.textContent = msg || '';
-//   }
-
-//   function updatePreview(){
-//     var f = getFile();
-//     if(!prev) return;
-
-//     if(!f){
-//       prev.style.display = 'none';
-//       prev.src = '';
-//       return;
-//     }
-
-//     // preview via jouw resolver (optie 2)
-//     var url = resolveImageFile(f, DATA);
-
-//     prev.style.display = 'block';
-//     prev.src = url;
-//     prev.onerror = function(){
-//       prev.onerror = null;
-//       prev.style.display = 'none';
-//       setHint('⚠️ Bestand niet gevonden op GitHub. Upload "' + f + '" naar images/ en commit & push.');
-//     };
-//   }
-
-//   function applyFile(name, origin){
-//     name = String(name || '').trim();
-//     setFile(name);
-//     if(txt) txt.value = name;
-
-//     if(origin === 'dropped' && name){
-//       setHint('📌 Je sleepte een foto. Upload "' + name + '" nog naar images/ en commit & push.');
-//     } else {
-//       setHint('');
-//     }
-
-//     updatePreview();
-//     // indien je validation/render wil triggeren:
-//     // renderValidation();
-//   }
-
-//   // combobox vullen (als mogelijk)
-//   if(sel){
-//     sel.innerHTML = '<option value="">Kies uit lijst…</option>';
-//     sel.disabled = true;
-
-//     loadImagesIndex(function(err, files){
-//       if(err){
-//         sel.disabled = true;
-//         setHint('ℹ️ Geen images/index.json gevonden. Typ een bestandsnaam of sleep een foto (en upload later naar GitHub).');
-//         return;
-//       }
-//       sel.disabled = false;
-//       for(var i=0;i<files.length;i++){
-//         var opt = document.createElement('option');
-//         opt.value = files[i];
-//         opt.textContent = files[i];
-//         sel.appendChild(opt);
-//       }
-//       // selecteer huidige waarde
-//       var cur = getFile();
-//       if(cur) sel.value = cur;
-//     });
-
-//     sel.addEventListener('change', function(){
-//       if(this.value) applyFile(this.value, 'select');
-//     });
-//   }
-
-//   // typen
-//   if(txt){
-//     txt.value = getFile() || '';
-//     txt.addEventListener('input', function(){
-//       applyFile(this.value, 'typed');
-//     });
-//   }
-
-//   // drag & drop + file picker (we nemen enkel de naam over)
-//   function openFilePicker(){
-//     if(fin) fin.click();
-//   }
-
-//   if(drop){
-//     drop.addEventListener('click', openFilePicker);
-
-//     drop.addEventListener('dragover', function(e){
-//       e.preventDefault();
-//       drop.classList.add('drag');
-//     });
-//     drop.addEventListener('dragleave', function(){
-//       drop.classList.remove('drag');
-//     });
-//     drop.addEventListener('drop', function(e){
-//       e.preventDefault();
-//       drop.classList.remove('drag');
-
-//       var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-//       if(!file) return;
-
-//       applyFile(file.name, 'dropped');
-//     });
-//   }
-
-//   if(fin){
-//     fin.addEventListener('change', function(){
-//       var file = fin.files && fin.files[0];
-//       if(file) applyFile(file.name, 'dropped');
-//       fin.value = '';
-//     });
-//   }
-
-//   updatePreview();
-// }
-
-
 
   function download(filename, text){
     var blob = new Blob([text], {type:'application/json'});
@@ -363,22 +232,6 @@ function bindImagePickerUI(selEl, txtEl, hintEl, previewEl, fileInputEl, arr)//,
     setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity .25s'; }, 1400);
     setTimeout(function(){ t.remove(); }, 1800);
   }
-
-//  function imgUrlFromFileField(file){
-//   file = String(file || '').trim();
-//   if(!file) return '';
-
-//   // absolute url toelaten
-//   if(/^https?:\/\//i.test(file)) return file;
-
-//   // assetsBase verplicht in jouw nieuwe model
-//   var base = (DATA && DATA.meta && DATA.meta.assetsBase) ? String(DATA.meta.assetsBase).trim() : '';
-//   if(!base) return '';
-
-//   base = base.replace(/\/+$/,'') + '/';
-//   file = file.replace(/^\/+/,'');
-//   return base + 'images/' + file;
-// }
 
 
   function makeMapLink(lat,lng){
@@ -609,7 +462,7 @@ function clampPolicyPair(policy){
 
   if(POLICY_ORDER[su] == null) su = 'nextLocation';
   if(POLICY_ORDER[cw] == null) cw = su;
-
+  if(su === 'afterEnd') cw = 'afterEnd';
   // invariant: closeWhen >= showUntil
   if(POLICY_ORDER[cw] < POLICY_ORDER[su]) cw = su;
 
@@ -650,6 +503,7 @@ function normalizeVragen(arr){
     } else {
       q = { id: genVraagId(), type:'open', vraag:(v==null?'':String(v)) };
     }
+    q = normalizeMedia(q);
 
     if(q.type === 'mc' || q.type === 'checkbox'){
       q.opties = normalizeOpties(q.opties);
@@ -660,7 +514,35 @@ function normalizeVragen(arr){
     return q;
   });
 }
+function normalizeMedia(q){
+  q.media = ensureObj(q.media);
 
+  if(q.type === 'photo'){
+    q.media.mode = 'photo';
+    if(q.media.minCount == null) q.media.minCount = 1;
+    if(q.media.maxCount == null) q.media.maxCount = 1;
+
+    // defaults: ter plaatse
+    q.policy = clampPolicyPair(q.policy);
+    if(!q.policy.showUntil) q.policy.showUntil = 'inRange';
+    if(!q.policy.closeWhen) q.policy.closeWhen = 'inRange';
+    q.policy = clampPolicyPair(q.policy);
+  }
+
+  if(q.type === 'audio'){
+    q.media.mode = 'audio';
+    if(q.media.minSeconds == null) q.media.minSeconds = 10;
+    if(q.media.maxSeconds == null) q.media.maxSeconds = 60;
+
+    // defaults: ter plaatse
+    q.policy = clampPolicyPair(q.policy);
+    if(!q.policy.showUntil) q.policy.showUntil = 'inRange';
+    if(!q.policy.closeWhen) q.policy.closeWhen = 'inRange';
+    q.policy = clampPolicyPair(q.policy);
+  }
+
+  return q;
+}
 
 function updateWarningForQuestion(q, warnEl){
   if(!warnEl) return;
@@ -714,11 +596,19 @@ function buildVragenEditor(container, vragenArr, onChange){
   vragen.forEach(function(q, idx){
     var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
 
-    var ta       = row.querySelector('.qText');
-    var badge    = row.querySelector('.qTypeBadge');
-    var optBox   = row.querySelector('.qOptions');
-    var optList  = row.querySelector('.qOptList');
-    var btnAddOpt= row.querySelector('.qAddOpt');
+    var ta        = row.querySelector('.qText');
+    var badge     = row.querySelector('.qTypeBadge');
+    var optBox    = row.querySelector('.qOptions');
+    var optList   = row.querySelector('.qOptList');
+    var btnAddOpt = row.querySelector('.qAddOpt');
+
+    // media UI
+    var mediaBox      = row.querySelector('.qMedia');
+    var mediaMin      = row.querySelector('.qMediaMin');
+    var mediaMax      = row.querySelector('.qMediaMax');
+    var mediaMinLabel = row.querySelector('.qMediaMinLabel');
+    var mediaMaxLabel = row.querySelector('.qMediaMaxLabel');
+    var mediaHint     = row.querySelector('.qMediaHint');
 
     // policy UI
     var selShow  = row.querySelector('.qShowUntil');
@@ -727,7 +617,10 @@ function buildVragenEditor(container, vragenArr, onChange){
 
     // warning element
     var warnEl = row.querySelector('.qWarn');
-row.setAttribute('data-qtype', (q.type || 'open'));
+
+    // type marker (voor accentstrook)
+    row.setAttribute('data-qtype', (q.type || 'open'));
+
     // --- badge ---
     if(badge) badge.textContent = String(q.type || 'open').toUpperCase();
 
@@ -760,8 +653,8 @@ row.setAttribute('data-qtype', (q.type || 'open'));
       var su = selShow  ? selShow.value  : q.policy.showUntil;
       var cw = selClose ? selClose.value : q.policy.closeWhen;
 
-      q.policy.showUntil  = su;
-      q.policy.closeWhen  = cw;
+      q.policy.showUntil = su;
+      q.policy.closeWhen = cw;
 
       // force invariant
       q.policy = clampPolicyPair(q.policy);
@@ -774,8 +667,88 @@ row.setAttribute('data-qtype', (q.type || 'open'));
 
     if(selShow)  selShow.addEventListener('change', commitPolicy);
     if(selClose) selClose.addEventListener('change', commitPolicy);
-
     updatePolicyUI();
+
+    // --- media (photo/audio) ---
+    var isMedia = (q.type === 'photo' || q.type === 'audio');
+
+    if(mediaBox){
+      if(isMedia) mediaBox.classList.remove('hidden');
+      else mediaBox.classList.add('hidden');
+    }
+
+    if(isMedia){
+      q.media = ensureObj(q.media);
+
+      // helper: clamp min/max logisch (optioneel maar handig)
+      function clampMinMax(minVal, maxVal){
+        var mn = (minVal==='' || minVal==null) ? null : Number(minVal);
+        var mx = (maxVal==='' || maxVal==null) ? null : Number(maxVal);
+
+        if(mn!=null && mn < 0) mn = 0;
+        if(mx!=null && mx < 0) mx = 0;
+        if(mn!=null && mx!=null && mx < mn) mx = mn;
+
+        return { mn: mn, mx: mx };
+      }
+
+      if(q.type === 'photo'){
+        if(mediaMinLabel) mediaMinLabel.textContent = 'Min foto’s';
+        if(mediaMaxLabel) mediaMaxLabel.textContent = 'Max foto’s';
+        if(mediaHint) mediaHint.textContent = 'Foto-opdracht. Default: 1 foto. (Later: camera upload in geo-app)';
+
+        // defaults als normalize het nog niet deed
+        if(q.media.minCount == null) q.media.minCount = 1;
+        if(q.media.maxCount == null) q.media.maxCount = 1;
+
+        if(mediaMin) mediaMin.value = q.media.minCount;
+        if(mediaMax) mediaMax.value = q.media.maxCount;
+
+        if(mediaMin) mediaMin.addEventListener('input', function(){
+          var r = clampMinMax(this.value, mediaMax ? mediaMax.value : q.media.maxCount);
+          q.media.minCount = r.mn;
+          q.media.maxCount = r.mx;
+          if(mediaMax && r.mx!=null) mediaMax.value = r.mx;
+          commitAll();
+        });
+
+        if(mediaMax) mediaMax.addEventListener('input', function(){
+          var r = clampMinMax(mediaMin ? mediaMin.value : q.media.minCount, this.value);
+          q.media.minCount = r.mn;
+          q.media.maxCount = r.mx;
+          if(mediaMin && r.mn!=null) mediaMin.value = r.mn;
+          commitAll();
+        });
+      }
+
+      if(q.type === 'audio'){
+        if(mediaMinLabel) mediaMinLabel.textContent = 'Min seconden';
+        if(mediaMaxLabel) mediaMaxLabel.textContent = 'Max seconden';
+        if(mediaHint) mediaHint.textContent = 'Audio-opname. Default: 10–60 sec. (Later: opnemen in geo-app)';
+
+        if(q.media.minSeconds == null) q.media.minSeconds = 10;
+        if(q.media.maxSeconds == null) q.media.maxSeconds = 60;
+
+        if(mediaMin) mediaMin.value = q.media.minSeconds;
+        if(mediaMax) mediaMax.value = q.media.maxSeconds;
+
+        if(mediaMin) mediaMin.addEventListener('input', function(){
+          var r = clampMinMax(this.value, mediaMax ? mediaMax.value : q.media.maxSeconds);
+          q.media.minSeconds = r.mn;
+          q.media.maxSeconds = r.mx;
+          if(mediaMax && r.mx!=null) mediaMax.value = r.mx;
+          commitAll();
+        });
+
+        if(mediaMax) mediaMax.addEventListener('input', function(){
+          var r = clampMinMax(mediaMin ? mediaMin.value : q.media.minSeconds, this.value);
+          q.media.minSeconds = r.mn;
+          q.media.maxSeconds = r.mx;
+          if(mediaMin && r.mn!=null) mediaMin.value = r.mn;
+          commitAll();
+        });
+      }
+    }
 
     // --- opties voor mc/checkbox ---
     var hasOptions = (q.type === 'mc' || q.type === 'checkbox');
@@ -788,7 +761,6 @@ row.setAttribute('data-qtype', (q.type || 'open'));
     if(hasOptions && optList){
       optList.innerHTML = '';
 
-      // render opties
       (q.opties || []).forEach(function(opt, j){
         var r = document.createElement('div');
         r.className = 'qOptRow';
@@ -803,14 +775,11 @@ row.setAttribute('data-qtype', (q.type || 'open'));
 
         pick.addEventListener('change', function(){
           if(q.type === 'mc'){
-            // exact 1 correct
             q.opties.forEach(function(o){ o.correct = false; });
             q.opties[j].correct = true;
           } else {
-            // meerdere mogelijk
             q.opties[j].correct = !!pick.checked;
           }
-
           updateWarningForQuestion(q, warnEl);
           commitAll();
         });
@@ -837,12 +806,10 @@ row.setAttribute('data-qtype', (q.type || 'open'));
         del.addEventListener('click', function(){
           q.opties.splice(j, 1);
 
-          // zorg dat er altijd minstens 1 rij blijft
           if(q.opties.length === 0){
             q.opties.push({ id: genOptId(), tekst:'', correct:false });
           }
 
-          // waarschuwing updaten + commit + rerender
           updateWarningForQuestion(q, warnEl);
           commitAll();
           renderEditor();
@@ -854,7 +821,6 @@ row.setAttribute('data-qtype', (q.type || 'open'));
         optList.appendChild(r);
       });
 
-      // add optie knop
       if(btnAddOpt){
         btnAddOpt.addEventListener('click', function(){
           q.opties = normalizeOpties(q.opties);
@@ -866,7 +832,6 @@ row.setAttribute('data-qtype', (q.type || 'open'));
         });
       }
 
-      // init warning
       updateWarningForQuestion(q, warnEl);
     }
 
@@ -898,374 +863,6 @@ row.setAttribute('data-qtype', (q.type || 'open'));
   });
 }
 
-
-
-  // ---------------- Editor render ----------------
-// function renderEditor(){
-//   var body = qs('editorBody');
-//   if(!body) return;
-
-//   body.innerHTML = '';
-
-//   if(!DATA){
-//     body.appendChild(el('div','hint')).textContent = 'Laad een JSON om te starten.';
-//     return;
-//   }
-
-//   // helper: voeg meerdere files toe + previews, met één nette rerender
-//   function addImagesFromFiles(files, arr, cachePrefix){
-//     if(!files || !files.length) return;
-
-//     var startIndex = arr.length;
-//     // eerst data toevoegen
-//     for(var i=0;i<files.length;i++){
-//       var f = files[i];
-//       arr.push({ file: (f && f.name) ? f.name : 'image.jpg', credit: '' });
-//     }
-
-//     // dan previews inlezen
-//     var remaining = files.length;
-//     for(var j=0;j<files.length;j++){
-//       (function(file, idx){
-//         var reader = new FileReader();
-//         reader.onload = function(){
-//           previewCache[cachePrefix + '|' + idx] = reader.result;
-//           remaining--;
-//           if(remaining <= 0){
-//             renderEditor(); // 1 rerender wanneer alles klaar is
-//           }
-//         };
-//         reader.onerror = function(){
-//           remaining--;
-//           if(remaining <= 0) renderEditor();
-//         };
-//         reader.readAsDataURL(file);
-//       })(files[j], startIndex + j);
-//     }
-
-//     // snelle render zodat je de nieuwe rijen al ziet, preview volgt daarna
-//     renderEditor();
-//   }
-
-//   // ---------------- PRESTART ----------------
-//   if(currentView === 'prestart'){
-//     qs('editorTitle').textContent = 'Prestart';
-
-//     var node = qs('tplPrestart').content.cloneNode(true);
-//     body.appendChild(node);
-
-//     // pak elementen binnen de editor (niet globaal)
-//     var pre_useLocationId = body.querySelector('#pre_useLocationId');
-//     var pre_meetingLabel  = body.querySelector('#pre_meetingLabel');
-//     var pre_meetingLat    = body.querySelector('#pre_meetingLat');
-//     var pre_meetingLng    = body.querySelector('#pre_meetingLng');
-//     var pre_message       = body.querySelector('#pre_message');
-
-//     var preImagesEl       = body.querySelector('#pre_images');
-//     var pre_addImageFile  = body.querySelector('#pre_addImageFile');
-//     var pre_dropzone      = body.querySelector('#pre_dropzone');
-
-//     // ensure paths
-//     DATA.prestart = ensureObj(DATA.prestart);
-//     DATA.prestart.meetingPoint = ensureObj(DATA.prestart.meetingPoint);
-//     DATA.prestart.images = safeArr(DATA.prestart.images);
-
-//     // set values
-//     pre_useLocationId.value = DATA.prestart.useLocationId || '';
-//     pre_meetingLabel.value  = DATA.prestart.meetingPoint.label || '';
-//     pre_meetingLat.value    = (DATA.prestart.meetingPoint.lat!=null) ? DATA.prestart.meetingPoint.lat : '';
-//     pre_meetingLng.value    = (DATA.prestart.meetingPoint.lng!=null) ? DATA.prestart.meetingPoint.lng : '';
-//     pre_message.value       = DATA.prestart.message || '';
-
-//     // listeners
-//     pre_useLocationId.addEventListener('input', function(){ DATA.prestart.useLocationId = this.value.trim(); });
-//     pre_meetingLabel.addEventListener('input', function(){ DATA.prestart.meetingPoint.label = this.value; });
-//     pre_meetingLat.addEventListener('input', function(){ DATA.prestart.meetingPoint.lat = this.value===''?null:Number(this.value); });
-//     pre_meetingLng.addEventListener('input', function(){ DATA.prestart.meetingPoint.lng = this.value===''?null:Number(this.value); });
-//     pre_message.addEventListener('input', function(){ DATA.prestart.message = this.value; });
-
-//     // images editor
-//     buildImagesEditor(preImagesEl, DATA.prestart.images, 'prestart', function(newArr){
-//       DATA.prestart.images = newArr;
-//     });
-
-//     // file picker
-//     if(pre_addImageFile){
-//       pre_addImageFile.addEventListener('change', function(){
-//         handleAddImageFile(pre_addImageFile, DATA.prestart.images, 'prestart', function(newArr){
-//           DATA.prestart.images = newArr;
-//         });
-//       });
-//     }
-// // ✅ combobox + naam-input + preview
-// var pre_imgSelect  = body.querySelector('#pre_imgSelect');
-// var pre_imgName    = body.querySelector('#pre_imgName');
-// var pre_imgHint    = body.querySelector('#pre_imgHint');
-// var pre_imgPreview = body.querySelector('#pre_imgPreview');
-
-// bindImagePickerUI(
-//   pre_imgSelect,
-//   pre_imgName,
-//   pre_imgHint,
-//   pre_imgPreview,
-//   pre_addImageFile,
-//   DATA.prestart.images
-//   //,  'prestart'
-// );
-
-//     // drag & drop
-//     if(pre_dropzone){
-//       bindDropzone(pre_dropzone, function(files){
-//         addImagesFromFiles(files, DATA.prestart.images, 'prestart');
-//       });
-//     }
-
-//     return;
-//   }
-
-//   // ---------------- LOCATIE ----------------
-//   var locs = safeArr(DATA.locaties);
-//   var loc = null;
-//   for(var i=0;i<locs.length;i++){
-//     if(locs[i] && locs[i].id === currentLocId){ loc = locs[i]; break; }
-//   }
-//   if(!loc){
-//     body.appendChild(el('div','hint')).textContent = 'Kies een locatie links.';
-//     return;
-//   }
-
-//   qs('editorTitle').textContent = 'Locatie';
-
-//   var n2 = qs('tplLocatie').content.cloneNode(true);
-//   body.appendChild(n2);
-
-//   // elementen binnen body
-//   var loc_id        = body.querySelector('#loc_id');
-//   var loc_slot      = body.querySelector('#loc_slot');
-//   var loc_naam      = body.querySelector('#loc_naam');
-//   var loc_lat       = body.querySelector('#loc_lat');
-//   var loc_lng       = body.querySelector('#loc_lng');
-//   var loc_radius    = body.querySelector('#loc_radius');
-//   var loc_routeHint = body.querySelector('#loc_routeHint');
-//   var loc_uitlegKort= body.querySelector('#loc_uitlegKort');
-//   var loc_uitlegLang= body.querySelector('#loc_uitlegLang');
-//   var loc_mapLink   = body.querySelector('#loc_mapLink');
-
-//   var locImagesEl   = body.querySelector('#loc_images');
-//   var loc_addImageFile = body.querySelector('#loc_addImageFile');
-//   var loc_dropzone  = body.querySelector('#loc_dropzone');
-
-//   //var locVragenEl   = body.querySelector('#loc_vragen');
-//   //var loc_addVraag  = body.querySelector('#loc_addVraag');
-// var locVragenEl   = body.querySelector('#loc_vragen');
-
-// // nieuwe knoppen
-// var q_addOpen      = body.querySelector('#q_addOpen');
-// var q_addOther     = body.querySelector('#q_addOther');
-// var q_otherMenuBtn = body.querySelector('#q_otherMenuBtn');
-// var q_otherMenu    = body.querySelector('#q_otherMenu');
-
-// var q_addMedia     = body.querySelector('#q_addMedia');
-// var q_mediaMenuBtn = body.querySelector('#q_mediaMenuBtn');
-// var q_mediaMenu    = body.querySelector('#q_mediaMenu');
-
-// // ensure + normaliseer zodat loc.vragen intern objecten worden
-// loc.vragen = normalizeVragen(loc.vragen);
-
-// // render vragen
-// buildVragenEditor(locVragenEl, loc.vragen, function(newArr){
-//   loc.vragen = newArr;
-// });
-
-// function addVraagOfType(t){
-//   loc.vragen = normalizeVragen(loc.vragen); // safety
-//   loc.vragen.push({ id: genVraagId(), type: t, vraag: '' });
-//   renderEditor();
-// }
-
-// function setButtonLabels(){
-//   if(q_addOther) q_addOther.textContent = '+ ANDER: ' + String(lastQType.other).toUpperCase();
-//   if(q_addMedia) q_addMedia.textContent = '+ MEDIA: ' + String(lastQType.media).toUpperCase();
-// }
-
-// // init labels
-// setButtonLabels();
-// // start altijd dicht
-// closeMenu(q_otherMenu);
-// closeMenu(q_mediaMenu);
-
-// // klik in menu mag niet bubbelen naar document
-// if(q_otherMenu){
-//   q_otherMenu.addEventListener('click', function(e){ e.stopPropagation(); });
-// }
-// if(q_mediaMenu){
-//   q_mediaMenu.addEventListener('click', function(e){ e.stopPropagation(); });
-// }
-
-// // direct add buttons
-// if(q_addOpen){
-//   q_addOpen.addEventListener('click', function(){
-//     addVraagOfType('open');
-//   });
-// }
-// if(q_addOther){
-//   q_addOther.addEventListener('click', function(e){
-//     e.preventDefault(); e.stopPropagation();
-//     addVraagOfType(lastQType.other || 'mc');
-//   });
-// }
-// if(q_addMedia){
-//   q_addMedia.addEventListener('click', function(e){
-//     e.preventDefault(); e.stopPropagation();
-//     addVraagOfType(lastQType.media || 'photo');
-//   });
-// }
-
-
-// // dropdown helpers
-// function openMenu(menuEl){
-//   if(!menuEl) return;
-//   menuEl.classList.remove('hidden');
-// }
-// function closeMenu(menuEl){
-//   if(!menuEl) return;
-//   menuEl.classList.add('hidden');
-// }
-// function toggleMenu(menuEl){
-//   if(!menuEl) return;
-//   if(menuEl.classList.contains('hidden')) openMenu(menuEl);
-//   else closeMenu(menuEl);
-// }
-
-// // menu button clicks
-// if(q_otherMenuBtn){
-//   q_otherMenuBtn.addEventListener('click', function(e){
-//     e.preventDefault(); e.stopPropagation();
-//     toggleMenu(q_otherMenu);
-//     closeMenu(q_mediaMenu);
-//   });
-// }
-// if(q_mediaMenuBtn){
-//   q_mediaMenuBtn.addEventListener('click', function(e){
-//     e.preventDefault(); e.stopPropagation();
-//     toggleMenu(q_mediaMenu);
-//     closeMenu(q_otherMenu);
-//   });
-// }
-
-// // menu item clicks (event delegation)
-// if(q_otherMenu){
-//   q_otherMenu.addEventListener('click', function(e){
-//     var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
-//     if(!btn) return;
-//     var t = btn.getAttribute('data-qtype') || 'mc';
-//     lastQType.other = t;
-//     setButtonLabels();
-//     closeMenu(q_otherMenu);
-//     addVraagOfType(t);
-//   });
-// }
-// if(q_mediaMenu){
-//   q_mediaMenu.addEventListener('click', function(e){
-//     var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
-//     if(!btn) return;
-//     var t = btn.getAttribute('data-qtype') || 'photo';
-//     lastQType.media = t;
-//     setButtonLabels();
-//     closeMenu(q_mediaMenu);
-//     addVraagOfType(t);
-//   });
-// }
-
-// // click outside closes menus
-// document.addEventListener('click', function(){
-//   closeMenu(q_otherMenu);
-//   closeMenu(q_mediaMenu);
-// });
-
-//   // ensure
-//   loc.uitleg = ensureObj(loc.uitleg);
-//   loc.images = safeArr(loc.images);
-//   loc.vragen = safeArr(loc.vragen);
-
-//   // set values
-//   loc_id.value         = loc.id || '';
-//   loc_slot.value       = loc.slot || '';
-//   loc_naam.value       = loc.naam || '';
-//   loc_lat.value        = (loc.lat!=null) ? loc.lat : '';
-//   loc_lng.value        = (loc.lng!=null) ? loc.lng : '';
-//   loc_radius.value     = (loc.radius!=null) ? loc.radius : '';
-//   loc_routeHint.value  = loc.routeHint || '';
-//   loc_uitlegKort.value = loc.uitleg.kort || '';
-//   loc_uitlegLang.value = loc.uitleg.uitgebreid || '';
-
-//   if(loc_mapLink){
-//     loc_mapLink.href = makeMapLink(loc.lat, loc.lng);
-//   }
-
-//   // listeners
-//   loc_slot.addEventListener('input', function(){ loc.slot = this.value.trim(); });
-//   loc_naam.addEventListener('input', function(){ loc.naam = this.value; });
-
-//   loc_lat.addEventListener('input', function(){
-//     loc.lat = this.value===''?null:Number(this.value);
-//     if(loc_mapLink) loc_mapLink.href = makeMapLink(loc.lat, loc.lng);
-//   });
-//   loc_lng.addEventListener('input', function(){
-//     loc.lng = this.value===''?null:Number(this.value);
-//     if(loc_mapLink) loc_mapLink.href = makeMapLink(loc.lat, loc.lng);
-//   });
-//   loc_radius.addEventListener('input', function(){ loc.radius = this.value===''?null:Number(this.value); });
-//   loc_routeHint.addEventListener('input', function(){ loc.routeHint = this.value; });
-//   loc_uitlegKort.addEventListener('input', function(){ loc.uitleg.kort = this.value; });
-//   loc_uitlegLang.addEventListener('input', function(){ loc.uitleg.uitgebreid = this.value; });
-
-//   // images
-//   buildImagesEditor(locImagesEl, loc.images, 'loc:' + loc.id, function(newArr){
-//     loc.images = newArr;
-//   });
-
-//   if(loc_addImageFile){
-//     loc_addImageFile.addEventListener('change', function(){
-//       handleAddImageFile(loc_addImageFile, loc.images, 'loc:' + loc.id, function(newArr){
-//         loc.images = newArr;
-//       });
-//     });
-//   }
-
-//   if(loc_dropzone){
-//     bindDropzone(loc_dropzone, function(files){
-//       addImagesFromFiles(files, loc.images, 'loc:' + loc.id);
-//     });
-//   }
-// // ✅ combobox + naam-input + preview
-// var loc_imgSelect  = body.querySelector('#loc_imgSelect');
-// var loc_imgName    = body.querySelector('#loc_imgName');
-// var loc_imgHint    = body.querySelector('#loc_imgHint');
-// var loc_imgPreview = body.querySelector('#loc_imgPreview');
-
-// bindImagePickerUI(
-//   loc_imgSelect,
-//   loc_imgName,
-//   loc_imgHint,
-//   loc_imgPreview,
-//   loc_addImageFile,
-//   loc.images
-//   //,  'loc:' + loc.id
-// );
-
-//   // vragen
-//   buildVragenEditor(locVragenEl, loc.vragen, function(newArr){
-//     loc.vragen = newArr;
-//   });
-
-//   if(loc_addVraag){
-//     loc_addVraag.addEventListener('click', function(){
-//       loc.vragen.push('');
-//       renderEditor();
-//     });
-//   }
-// }
 function renderEditor(){
   var body = qs('editorBody');
   if(!body) return;
@@ -1515,12 +1112,58 @@ function renderEditor(){
   var q_mediaMenuBtn = body.querySelector('#q_mediaMenuBtn');
   var q_mediaMenu    = body.querySelector('#q_mediaMenu');
 
-  function addVraagOfType(t){
-    loc.vragen = normalizeVragen(loc.vragen); // safety
-    loc.vragen.push({ id: genVraagId(), type:'open', vraag:'', policy:{ showUntil:'nextLocation', closeWhen:'nextLocation' } });
-    renderEditor();
+  function typeGroup(type){
+  if(type === 'photo' || type === 'audio') return 'media';
+  if(type === 'mc' || type === 'checkbox') return 'ander';
+  return 'open';
+}
 
+ function addVraagOfType(type){
+  var v = { id: genVraagId(), type: type, vraag: '' };
+
+  if(type === 'open'){
+    // niets extra
   }
+
+  else if(type === 'mc' || type === 'checkbox'){
+    v.opties = [
+      { id: genOptId(), tekst:'', correct:false }
+    ];
+  }
+
+  else if(type === 'photo'){
+    v.media = {
+      mode: 'photo',
+      minCount: 1,
+      maxCount: 1
+    };
+    v.policy = {
+      showUntil: 'inRange',
+      closeWhen: 'inRange'
+    };
+  }
+
+  else if(type === 'audio'){
+    v.media = {
+      mode: 'audio',
+      minSeconds: 10,
+      maxSeconds: 60
+    };
+    v.policy = {
+      showUntil: 'inRange',
+      closeWhen: 'inRange'
+    };
+  }
+
+  // toevoegen aan huidige locatie
+  currentLoc.vragen = currentLoc.vragen || [];
+  currentLoc.vragen.push(v);
+
+  // onthoud laatst gekozen type
+  lastQType[typeGroup(type)] = type;
+
+  renderEditor();
+}
 
   function setButtonLabels(){
     if(q_addOther) q_addOther.textContent = '+ ANDER: ' + String(lastQType.other || 'mc').toUpperCase();
@@ -1546,75 +1189,74 @@ function renderEditor(){
   closeMenu(q_otherMenu);
   closeMenu(q_mediaMenu);
 
-  // klik in menu mag niet bubbelen
-  if(q_otherMenu) q_otherMenu.addEventListener('click', function(e){ e.stopPropagation(); });
-  if(q_mediaMenu) q_mediaMenu.addEventListener('click', function(e){ e.stopPropagation(); });
+// klik in menu mag niet bubbelen
+if(q_otherMenu) q_otherMenu.addEventListener('click', function(e){ e.stopPropagation(); });
+if(q_mediaMenu) q_mediaMenu.addEventListener('click', function(e){ e.stopPropagation(); });
 
-  // direct add buttons
-  if(q_addOpen){
-    q_addOpen.addEventListener('click', function(){
-      addVraagOfType('open');
-    });
-  }
-  if(q_addOther){
-    q_addOther.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      addVraagOfType(lastQType.other || 'mc');
-    });
-  }
-  if(q_addMedia){
-    q_addMedia.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      addVraagOfType(lastQType.media || 'photo');
-    });
-  }
+// direct add buttons
+if(q_addOpen){
+  q_addOpen.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    addVraagOfType('open');
+  });
+}
+if(q_addOther){
+  q_addOther.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    addVraagOfType(lastQType.other || 'mc');
+  });
+}
+if(q_addMedia){
+  q_addMedia.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    addVraagOfType(lastQType.media || 'photo');
+  });
+}
 
-  // menu button clicks
-  if(q_otherMenuBtn){
-    q_otherMenuBtn.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      toggleMenu(q_otherMenu);
-      closeMenu(q_mediaMenu);
-    });
-  }
-  if(q_mediaMenuBtn){
-    q_mediaMenuBtn.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      toggleMenu(q_mediaMenu);
-      closeMenu(q_otherMenu);
-    });
-  }
+// menu button clicks
+if(q_otherMenuBtn){
+  q_otherMenuBtn.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    toggleMenu(q_otherMenu);
+    closeMenu(q_mediaMenu);
+  });
+}
+if(q_mediaMenuBtn){
+  q_mediaMenuBtn.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    toggleMenu(q_mediaMenu);
+    closeMenu(q_otherMenu);
+  });
+}
 
-  // menu item clicks (event delegation)
-  if(q_otherMenu){
-    q_otherMenu.addEventListener('click', function(e){
-      var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
-      if(!btn) return;
-      var t = btn.getAttribute('data-qtype') || 'mc';
-      lastQType.other = t;
-      setButtonLabels();
-      closeMenu(q_otherMenu);
-      addVraagOfType(t);
-    });
-  }
-  if(q_mediaMenu){
-    q_mediaMenu.addEventListener('click', function(e){
-      var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
-      if(!btn) return;
-      var t = btn.getAttribute('data-qtype') || 'photo';
-      lastQType.media = t;
-      setButtonLabels();
-      closeMenu(q_mediaMenu);
-      addVraagOfType(t);
-    });
-  }
+// menu item clicks (event delegation)
+if(q_otherMenu){
+  q_otherMenu.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
+    if(!btn) return;
 
-//   // click outside closes menus (⚠️ deze addt bij elke render; ok functioneel, maar kan “opstapelen”)
-//   // Als je dit écht netjes wil: maak dit globaal 1× in init/bindCoreListeners.
-//   document.addEventListener('click', function(){
-//     closeMenu(q_otherMenu);
-//     closeMenu(q_mediaMenu);
-//   });
+    var t = btn.getAttribute('data-qtype') || 'mc';
+    lastQType.other = t;
+
+    setButtonLabels();
+    closeMenu(q_otherMenu);
+    addVraagOfType(t);
+  });
+}
+
+if(q_mediaMenu){
+  q_mediaMenu.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest ? e.target.closest('.ddItem') : null;
+    if(!btn) return;
+
+    var t = btn.getAttribute('data-qtype') || 'photo';
+    lastQType.media = t;
+
+    setButtonLabels();
+    closeMenu(q_mediaMenu);
+    addVraagOfType(t);
+  });
+}
 
   // render vragenlijst (1×, geen dubbele call meer)
   if(locVragenEl){
@@ -1623,7 +1265,6 @@ function renderEditor(){
     });
   }
 }
-
 
   // ---------------- Load / Bind top UI ----------------
   function bindTabs(){

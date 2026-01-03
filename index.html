@@ -327,6 +327,27 @@
         <div class="qOptList"></div>
         <button class="btn ghost small qAddOpt" type="button">+ optie</button>
       </div>
+      <!-- Mediablok -->
+        <!-- media (enkel voor photo/audio) -->
+        <div class="qMedia hidden">
+        <div class="mini" style="opacity:.85;margin:6px 0">Media</div>
+
+        <div class="grid2 qMediaGrid">
+            <div class="field">
+            <label class="qMediaMinLabel">Min</label>
+            <input class="qMediaMin" type="number" step="1" min="0">
+            </div>
+            <div class="field">
+            <label class="qMediaMaxLabel">Max</label>
+            <input class="qMediaMax" type="number" step="1" min="0">
+            </div>
+        </div>
+
+  <div class="hint mini qMediaHint" style="margin-top:6px;opacity:.85"></div>
+</div>
+
+        <div class="hint mini qMediaHint" style="margin-top:6px;opacity:.85"></div>
+        </div>
 
       <!-- Policy (voorlopig bij alles; later evt. conditioneel) -->
       <div class="qPolicyRow">
@@ -337,22 +358,22 @@
 
         <div class="field miniField">
           <label>Toon tot</label>
-          <select class="qShowUntil input">
-            <option value="inRange">inRange</option>
-            <option value="nextLocation">nextLocation</option>
-            <option value="beforeEnd">beforeEnd</option>
-            <option value="afterEnd">afterEnd</option>
-          </select>
+            <select class="qShowUntil input">
+            <option value="inRange">Ter plaatse (binnen radius)</option>
+            <option value="nextLocation">Tot volgende locatie</option>
+            <option value="beforeEnd">Tot einde route</option>
+            <option value="afterEnd">Ook na einde (eindscherm)</option>
+            </select>
         </div>
 
         <div class="field miniField">
           <label>Sluit bij</label>
-          <select class="qCloseWhen input">
-            <option value="inRange">inRange</option>
-            <option value="nextLocation">nextLocation</option>
-            <option value="beforeEnd">beforeEnd</option>
-            <option value="afterEnd">afterEnd</option>
-          </select>
+            <select class="qCloseWhen input">
+            <option value="inRange">Sluit bij vertrek (buiten radius)</option>
+            <option value="nextLocation">Sluit bij volgende locatie</option>
+            <option value="beforeEnd">Sluit bij einde route</option>
+            <option value="afterEnd">Blijft invulbaar na einde</option>
+            </select>
         </div>
 
         <div class="mini qPolicyHint" style="grid-column: 2 / 4; opacity:.8; margin-top:2px"></div>
