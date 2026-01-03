@@ -239,7 +239,29 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   display:flex;
   gap:16px;              /* meer ruimte tussen inhoud en knoppen */
   align-items:flex-start;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 14px 0;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  position: relative;
+  overflow: hidden;
 }
+.qRow:before{
+  content:'';
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width: 6px;
+  background: rgba(255,255,255,.16); /* default */
+}
+
+/* typekleuren (subtiel) */
+.qRow[data-qtype="mc"]:before{ background: rgba(80,170,255,.55); }
+.qRow[data-qtype="checkbox"]:before{ background: rgba(120,255,170,.45); }
+.qRow[data-qtype="open"]:before{ background: rgba(255,210,90,.45); }
+.qRow[data-qtype="photo"]:before,
+.qRow[data-qtype="audio"]:before{ background: rgba(255,120,210,.40); }
 .qOptions{
   padding-right: 10px;
 }
@@ -316,6 +338,7 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   gap:8px;
   margin-left: 6px;      /* duwt knoppen iets naar rechts */
   flex: 0 0 auto;
+  padding-top: 6px;
 }
 /* grid-template-columns: 300px 1fr 1fr; */
 .qPolicyRow{

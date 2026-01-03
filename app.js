@@ -727,7 +727,7 @@ function buildVragenEditor(container, vragenArr, onChange){
 
     // warning element
     var warnEl = row.querySelector('.qWarn');
-
+row.setAttribute('data-qtype', (q.type || 'open'));
     // --- badge ---
     if(badge) badge.textContent = String(q.type || 'open').toUpperCase();
 
