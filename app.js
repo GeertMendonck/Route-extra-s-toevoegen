@@ -1517,8 +1517,9 @@ function renderEditor(){
 
   function addVraagOfType(t){
     loc.vragen = normalizeVragen(loc.vragen); // safety
-    loc.vragen.push({ id: genVraagId(), type: t, vraag: '' });
+    loc.vragen.push({ id: genVraagId(), type:'open', vraag:'', policy:{ showUntil:'nextLocation', closeWhen:'nextLocation' } });
     renderEditor();
+
   }
 
   function setButtonLabels(){
