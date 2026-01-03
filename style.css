@@ -317,16 +317,12 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   margin-left: 6px;      /* duwt knoppen iets naar rechts */
   flex: 0 0 auto;
 }
-.qPolicy{
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+/* grid-template-columns: 300px 1fr 1fr; */
 .qPolicyRow{
   margin-top: 10px;
   display: grid;
-  grid-template-columns: 300px 1fr 1fr; /* uitleg | show | close */
+  grid-template-columns: 300px minmax(220px, 360px) minmax(220px, 360px);
+
   gap: 12px;
   align-items: start;
 }
@@ -335,6 +331,9 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   opacity: .85;
   line-height: 1.25;
   padding-top: 22px; /* lijnt mooi uit met labels */
+}
+.qPolicyHint{
+  grid-column: 2 / 4;
 }
 .miniField label{
   font-size: 12px;
