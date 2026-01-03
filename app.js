@@ -668,54 +668,130 @@ function genVraagId(){
 function normalizeVragen(arr){
   var raw = safeArr(arr);
   return raw.map(function(v){
+    var q;
     if(v && typeof v === 'object'){
-      if(!v.id) v.id = genVraagId();
-      if(!v.type) v.type = 'open';
-      if(v.vraag == null) v.vraag = '';
-      return v;
+      q = v;
+      if(!q.id) q.id = genVraagId();
+      if(!q.type) q.type = 'open';
+      if(q.vraag == null) q.vraag = '';
+    } else {
+      q = { id: genVraagId(), type:'open', vraag:(v==null?'':String(v)) };
     }
-    return { id: genVraagId(), type:'open', vraag:(v==null?'':String(v)) };
+
+    // defaults per type
+    if(q.type === 'mc' || q.type === 'checkbox'){
+      q.opties = safeArr(q.opties);
+      if(q.opties.length === 0) q.opties = [''];
+    }
+
+    return q;
   });
 }
+
 
 function buildVragenEditor(container, vragenArr, onChange){
   container.innerHTML = '';
 
-  // normaliseer zodat we altijd met objecten werken
   var vragen = normalizeVragen(vragenArr);
+
+  function commitAll(){
+    onChange(vragen);
+  }
 
   vragen.forEach(function(q, idx){
     var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
+
     var ta = row.querySelector('.qText');
+    var badge = row.querySelector('.qTypeBadge');
+    var optBox = row.querySelector('.qOptions');
+    var optList = row.querySelector('.qOptList');
+    var btnAddOpt = row.querySelector('.qAddOpt');
+
+    // badge
+    badge.textContent = String(q.type || 'open').toUpperCase();
+
+    // vraagtekst
     ta.value = (q.vraag==null?'':String(q.vraag));
-
-    function commit(){
+    ta.addEventListener('input', function(){
       vragen[idx].vraag = ta.value;
-      onChange(vragen);
-    }
-    ta.addEventListener('input', commit);
+      commitAll();
+    });
 
+    // opties enkel voor mc/checkbox
+    var hasOptions = (q.type === 'mc' || q.type === 'checkbox');
+    if(hasOptions){
+      optBox.classList.remove('hidden');
+      optList.innerHTML = '';
+
+      // render opties
+      (q.opties || []).forEach(function(opt, j){
+        var r = document.createElement('div');
+        r.className = 'qOptRow';
+
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'input';
+        inp.placeholder = 'Optie…';
+        inp.value = (opt==null?'':String(opt));
+        inp.addEventListener('input', function(){
+          vragen[idx].opties[j] = inp.value;
+          commitAll();
+        });
+
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'btn danger small';
+        del.textContent = '✕';
+        del.title = 'Verwijder optie';
+        del.addEventListener('click', function(){
+          vragen[idx].opties.splice(j, 1);
+          if(vragen[idx].opties.length === 0) vragen[idx].opties.push('');
+          commitAll();
+          renderEditor();
+        });
+
+        r.appendChild(inp);
+        r.appendChild(del);
+        optList.appendChild(r);
+      });
+
+      if(btnAddOpt){
+        btnAddOpt.addEventListener('click', function(){
+          vragen[idx].opties = safeArr(vragen[idx].opties);
+          vragen[idx].opties.push('');
+          commitAll();
+          renderEditor();
+        });
+      }
+    } else {
+      optBox.classList.add('hidden');
+    }
+
+    // reorder/delete (zoals jij had)
     row.querySelector('.qUp').addEventListener('click', function(){
       if(idx<=0) return;
       var tmp = vragen[idx-1]; vragen[idx-1]=vragen[idx]; vragen[idx]=tmp;
-      onChange(vragen);
+      commitAll();
       renderEditor();
     });
+
     row.querySelector('.qDown').addEventListener('click', function(){
       if(idx>=vragen.length-1) return;
       var tmp = vragen[idx+1]; vragen[idx+1]=vragen[idx]; vragen[idx]=tmp;
-      onChange(vragen);
+      commitAll();
       renderEditor();
     });
+
     row.querySelector('.qDel').addEventListener('click', function(){
       vragen.splice(idx,1);
-      onChange(vragen);
+      commitAll();
       renderEditor();
     });
 
     container.appendChild(row);
   });
 }
+
 
 
   // ---------------- Editor render ----------------

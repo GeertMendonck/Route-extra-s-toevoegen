@@ -272,7 +272,7 @@
   </div>
 
   <div class="hint" style="flex:1;min-width:260px">
-    Sleepen is nog niet voorzien — maar je kan wel “omhoog/omlaag”.
+    Slepen is nog niet voorzien — maar je kan wel “omhoog/omlaag” met de pijltjes.
   </div>
 </div>
 
@@ -312,15 +312,30 @@
 
   <!-- VRAAG ROW TEMPLATE -->
   <template id="tplVraagRow">
-    <div class="qRow">
+  <div class="qRow">
+    <div class="qMain">
+      <div class="qMeta">
+        <span class="qTypeBadge">OPEN</span>
+      </div>
+
       <textarea class="qText" rows="2" placeholder="Typ je vraag…"></textarea>
-      <div class="qBtns">
-        <button class="btn ghost small qUp" title="Omhoog">↑</button>
-        <button class="btn ghost small qDown" title="Omlaag">↓</button>
-        <button class="btn danger small qDel" title="Verwijder">✕</button>
+
+      <!-- extra: opties (enkel voor mc/checkbox) -->
+      <div class="qOptions hidden">
+        <div class="mini" style="opacity:.85;margin:6px 0">Opties</div>
+        <div class="qOptList"></div>
+        <button class="btn ghost small qAddOpt" type="button">+ optie</button>
       </div>
     </div>
-  </template>
+
+    <div class="qBtns">
+      <button class="btn ghost small qUp" title="Omhoog">↑</button>
+      <button class="btn ghost small qDown" title="Omlaag">↓</button>
+      <button class="btn danger small qDel" title="Verwijder">✕</button>
+    </div>
+  </div>
+</template>
+
 
   <script src="app.js"></script>
 </body>

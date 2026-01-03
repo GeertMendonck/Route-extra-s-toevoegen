@@ -235,15 +235,23 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   background: rgba(95,211,255,.10);
 }
 
-.qRow{
-  display:grid;
-  grid-template-columns: 1fr 46px;
-  gap:10px;
-  padding:10px;
-  border:1px solid var(--line);
-  border-radius:16px;
-  background: rgba(0,0,0,.14);
-  margin-top:10px;
+.qRow{ display:flex; gap:10px; align-items:flex-start; }
+.qMain{ flex:1; min-width:240px; }
+.qTypeBadge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  opacity:.9;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.10);
+  margin-bottom:6px;
+}
+.qOptList{ display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
+
+.qOptRow{ display:flex; gap:8px; align-items:center; }
+.qOptRow input{
+  flex:1;
 }
 .qRow textarea{
   width:100%;
