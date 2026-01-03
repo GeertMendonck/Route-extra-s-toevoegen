@@ -311,7 +311,7 @@
   </template>
 
   <!-- VRAAG ROW TEMPLATE -->
-  <template id="tplVraagRow">
+<template id="tplVraagRow">
   <div class="qRow">
     <div class="qMain">
       <div class="qMeta">
@@ -319,42 +319,43 @@
       </div>
 
       <textarea class="qText" rows="2" placeholder="Typ je vraag…"></textarea>
-        <div class="qWarn hidden"></div>
-        <div class="qPolicyRow">
-        <div class="qPolicyExplain mini">
-            <b>Toon tot</b> = wanneer verdwijnt dit uit beeld.<br>
-            <b>Sluit bij</b> = vanaf wanneer kan je niet meer antwoorden.
-        </div>
+      <div class="qWarn hidden"></div>
 
-        <div class="field miniField">
-            <label>Toon tot</label>
-            <select class="qShowUntil input">
-            <option value="inRange">inRange</option>
-            <option value="nextLocation">nextLocation</option>
-            <option value="beforeEnd">beforeEnd</option>
-            <option value="afterEnd">afterEnd</option>
-            </select>
-        </div>
-
-        <div class="field miniField">
-            <label>Sluit bij</label>
-            <select class="qCloseWhen input">
-            <option value="inRange">inRange</option>
-            <option value="nextLocation">nextLocation</option>
-            <option value="beforeEnd">beforeEnd</option>
-            <option value="afterEnd">afterEnd</option>
-            </select>
-        </div>
-
-  <div class="mini qPolicyHint" style="grid-column: 2 / 4; opacity:.8; margin-top:2px"></div>
-</div>
-
-
-      <!-- extra: opties (enkel voor mc/checkbox) -->
+      <!-- Opties (enkel voor mc/checkbox) -->
       <div class="qOptions hidden">
         <div class="mini" style="opacity:.85;margin:6px 0">Opties</div>
         <div class="qOptList"></div>
         <button class="btn ghost small qAddOpt" type="button">+ optie</button>
+      </div>
+
+      <!-- Policy (voorlopig bij alles; later evt. conditioneel) -->
+      <div class="qPolicyRow">
+        <div class="qPolicyExplain mini">
+          <b>Toon tot</b> = wanneer verdwijnt dit uit beeld.<br>
+          <b>Sluit bij</b> = vanaf wanneer kan je niet meer antwoorden.
+        </div>
+
+        <div class="field miniField">
+          <label>Toon tot</label>
+          <select class="qShowUntil input">
+            <option value="inRange">inRange</option>
+            <option value="nextLocation">nextLocation</option>
+            <option value="beforeEnd">beforeEnd</option>
+            <option value="afterEnd">afterEnd</option>
+          </select>
+        </div>
+
+        <div class="field miniField">
+          <label>Sluit bij</label>
+          <select class="qCloseWhen input">
+            <option value="inRange">inRange</option>
+            <option value="nextLocation">nextLocation</option>
+            <option value="beforeEnd">beforeEnd</option>
+            <option value="afterEnd">afterEnd</option>
+          </select>
+        </div>
+
+        <div class="mini qPolicyHint" style="grid-column: 2 / 4; opacity:.8; margin-top:2px"></div>
       </div>
     </div>
 
