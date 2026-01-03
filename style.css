@@ -419,6 +419,7 @@ code{
 /* Utilities */
 .hidden{ display:none !important; }
 
+
 @media (max-width: 900px){
   .qPolicyRow{
     grid-template-columns: 1fr;
