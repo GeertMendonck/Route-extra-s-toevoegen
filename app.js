@@ -618,27 +618,384 @@ function updateWarningForQuestion(q, warnEl){
   }
   
 }
+// function buildVragenEditor(container, vragenArr, onChange){
+//   container.innerHTML = '';
+
+//   // normaliseer alles (ids, types, opties, policy, defaults)
+//   var vragen = normalizeVragen(vragenArr);
+
+//   function commitAll(){
+//     onChange(vragen);
+//   }
+
+//   vragen.forEach(function(q, idx){
+//     var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
+
+//     var ta        = row.querySelector('.qText');
+//     var badge     = row.querySelector('.qTypeBadge');
+//     var optBox    = row.querySelector('.qOptions');
+//     var optList   = row.querySelector('.qOptList');
+//     var btnAddOpt = row.querySelector('.qAddOpt');
+
+//     // media UI
+//     var mediaBox      = row.querySelector('.qMedia');
+//     var mediaMin      = row.querySelector('.qMediaMin');
+//     var mediaMax      = row.querySelector('.qMediaMax');
+//     var mediaMinLabel = row.querySelector('.qMediaMinLabel');
+//     var mediaMaxLabel = row.querySelector('.qMediaMaxLabel');
+//     var mediaHint     = row.querySelector('.qMediaHint');
+
+//     // policy UI
+//     var selShow  = row.querySelector('.qShowUntil');
+//     var selClose = row.querySelector('.qCloseWhen');
+//     var polHint  = row.querySelector('.qPolicyHint');
+
+//     // warning element
+//     var warnEl = row.querySelector('.qWarn');
+
+//     // type marker (voor accentstrook)
+//     row.setAttribute('data-qtype', (q.type || 'open'));
+
+//     // --- badge ---
+//     if(badge) badge.textContent = String(q.type || 'open').toUpperCase();
+
+//     // --- vraagtekst ---
+//     if(ta){
+//       ta.value = (q.vraag==null?'':String(q.vraag));
+//       ta.addEventListener('input', function(){
+//         vragen[idx].vraag = ta.value;
+//         commitAll();
+//       });
+//     }
+
+//     // --- policy defaults + UI (1× per vraag) ---
+//     q.policy = clampPolicyPair(q.policy);
+
+//     function updatePolicyUI(){
+//       if(selShow)  selShow.value  = q.policy.showUntil;
+//       if(selClose) selClose.value = q.policy.closeWhen;
+
+//       if(polHint){
+//         if(POLICY_ORDER[q.policy.closeWhen] === POLICY_ORDER[q.policy.showUntil]){
+//           polHint.textContent = '✓ Toon en sluit op hetzelfde moment.';
+//         } else {
+//           polHint.textContent = '✓ Vraag verdwijnt eerder, maar blijft nog geldig tot “Sluit bij”.';
+//         }
+//       }
+//     }
+
+//     function commitPolicy(){
+//       var su = selShow  ? selShow.value  : q.policy.showUntil;
+//       var cw = selClose ? selClose.value : q.policy.closeWhen;
+
+//       q.policy.showUntil = su;
+//       q.policy.closeWhen = cw;
+
+//       // force invariant
+//       q.policy = clampPolicyPair(q.policy);
+
+//       // zet UI terug recht als we clampen moesten doen
+//       updatePolicyUI();
+//             var policyBlock  = row.querySelector('.qPolicyBlock');
+//             var policyLocked = row.querySelector('.qPolicyLocked');
+//             var isMedia = (q.type === 'photo' || q.type === 'audio');
+
+//             if(policyBlock){
+//             if(isMedia) policyBlock.classList.add('hidden');
+//             else policyBlock.classList.remove('hidden');
+//             }
+
+//             if(policyLocked){
+//             if(isMedia){
+//                 policyLocked.classList.remove('hidden');
+//                 policyLocked.textContent = '🔒 Media-opdracht: enkel ter plaatse invulbaar (sluit bij vertrek).';
+//             } else {
+//                 policyLocked.classList.add('hidden');
+//                 policyLocked.textContent = '';
+//             }
+//             }
+//       commitAll();
+//     }
+
+//     if(selShow)  selShow.addEventListener('change', commitPolicy);
+//     if(selClose) selClose.addEventListener('change', commitPolicy);
+//     updatePolicyUI();
+
+//     // --- media (photo/audio) ---
+//     var isMedia = (q.type === 'photo' || q.type === 'audio');
+
+//     if(mediaBox){
+//       if(isMedia) mediaBox.classList.remove('hidden');
+//       else mediaBox.classList.add('hidden');
+//     }
+
+//     if(isMedia){
+//       q.media = ensureObj(q.media);
+
+//       // helper: clamp min/max logisch (optioneel maar handig)
+//       function clampMinMax(minVal, maxVal){
+//         var mn = (minVal==='' || minVal==null) ? null : Number(minVal);
+//         var mx = (maxVal==='' || maxVal==null) ? null : Number(maxVal);
+
+//         if(mn!=null && mn < 0) mn = 0;
+//         if(mx!=null && mx < 0) mx = 0;
+//         if(mn!=null && mx!=null && mx < mn) mx = mn;
+
+//         return { mn: mn, mx: mx };
+//       }
+
+//       if(q.type === 'photo'){
+//         if(mediaMinLabel) mediaMinLabel.textContent = 'Min foto’s';
+//         if(mediaMaxLabel) mediaMaxLabel.textContent = 'Max foto’s';
+//         if(mediaHint) mediaHint.textContent = 'Foto-opdracht. Default: 1 foto. (Later: camera upload in geo-app)';
+
+//         // defaults als normalize het nog niet deed
+//         if(q.media.minCount == null) q.media.minCount = 1;
+//         if(q.media.maxCount == null) q.media.maxCount = 1;
+
+//         if(mediaMin) mediaMin.value = q.media.minCount;
+//         if(mediaMax) mediaMax.value = q.media.maxCount;
+
+//         if(mediaMin) mediaMin.addEventListener('input', function(){
+//           var r = clampMinMax(this.value, mediaMax ? mediaMax.value : q.media.maxCount);
+//           q.media.minCount = r.mn;
+//           q.media.maxCount = r.mx;
+//           if(mediaMax && r.mx!=null) mediaMax.value = r.mx;
+//           commitAll();
+//         });
+
+//         if(mediaMax) mediaMax.addEventListener('input', function(){
+//           var r = clampMinMax(mediaMin ? mediaMin.value : q.media.minCount, this.value);
+//           q.media.minCount = r.mn;
+//           q.media.maxCount = r.mx;
+//           if(mediaMin && r.mn!=null) mediaMin.value = r.mn;
+//           commitAll();
+//         });
+//       }
+
+//       if(q.type === 'audio'){
+//         if(mediaMinLabel) mediaMinLabel.textContent = 'Min seconden';
+//         if(mediaMaxLabel) mediaMaxLabel.textContent = 'Max seconden';
+//         if(mediaHint) mediaHint.textContent = 'Audio-opname. Default: 10–60 sec. (Later: opnemen in geo-app)';
+
+//         if(q.media.minSeconds == null) q.media.minSeconds = 10;
+//         if(q.media.maxSeconds == null) q.media.maxSeconds = 60;
+
+//         if(mediaMin) mediaMin.value = q.media.minSeconds;
+//         if(mediaMax) mediaMax.value = q.media.maxSeconds;
+
+//         if(mediaMin) mediaMin.addEventListener('input', function(){
+//           var r = clampMinMax(this.value, mediaMax ? mediaMax.value : q.media.maxSeconds);
+//           q.media.minSeconds = r.mn;
+//           q.media.maxSeconds = r.mx;
+//           if(mediaMax && r.mx!=null) mediaMax.value = r.mx;
+//           commitAll();
+//         });
+
+//         if(mediaMax) mediaMax.addEventListener('input', function(){
+//           var r = clampMinMax(mediaMin ? mediaMin.value : q.media.minSeconds, this.value);
+//           q.media.minSeconds = r.mn;
+//           q.media.maxSeconds = r.mx;
+//           if(mediaMin && r.mn!=null) mediaMin.value = r.mn;
+//           commitAll();
+//         });
+//       }
+//     }
+
+//     // --- opties voor mc/checkbox ---
+//     var hasOptions = (q.type === 'mc' || q.type === 'checkbox');
+
+//     if(optBox){
+//       if(hasOptions) optBox.classList.remove('hidden');
+//       else optBox.classList.add('hidden');
+//     }
+
+//     if(hasOptions && optList){
+//       optList.innerHTML = '';
+
+//       (q.opties || []).forEach(function(opt, j){
+//         var r = document.createElement('div');
+//         r.className = 'qOptRow';
+
+//         // correct selector
+//         var pick = document.createElement('input');
+//         pick.type = (q.type === 'mc') ? 'radio' : 'checkbox';
+//         if(q.type === 'mc'){
+//           pick.name = 'correct_' + q.id; // groep per vraag
+//         }
+//         pick.checked = (opt.correct === true);
+
+//         pick.addEventListener('change', function(){
+//           if(q.type === 'mc'){
+//             q.opties.forEach(function(o){ o.correct = false; });
+//             q.opties[j].correct = true;
+//           } else {
+//             q.opties[j].correct = !!pick.checked;
+//           }
+//           updateWarningForQuestion(q, warnEl);
+//           commitAll();
+//         });
+
+//         // tekst input
+//         var inp = document.createElement('input');
+//         inp.type = 'text';
+//         inp.className = 'input';
+//         inp.placeholder = 'Optie…';
+//         inp.value = (opt.tekst==null?'':String(opt.tekst));
+
+//         inp.addEventListener('input', function(){
+//           q.opties[j].tekst = inp.value;
+//           commitAll();
+//         });
+
+//         // delete optie
+//         var del = document.createElement('button');
+//         del.type = 'button';
+//         del.className = 'btn danger small';
+//         del.textContent = '✕';
+//         del.title = 'Verwijder optie';
+
+//         del.addEventListener('click', function(){
+//           q.opties.splice(j, 1);
+
+//           if(q.opties.length === 0){
+//             q.opties.push({ id: genOptId(), tekst:'', correct:false });
+//           }
+
+//           updateWarningForQuestion(q, warnEl);
+//           commitAll();
+//           renderEditor();
+//         });
+
+//         r.appendChild(pick);
+//         r.appendChild(inp);
+//         r.appendChild(del);
+//         optList.appendChild(r);
+//       });
+
+//       if(btnAddOpt){
+//         btnAddOpt.addEventListener('click', function(){
+//           q.opties = normalizeOpties(q.opties);
+//           q.opties.push({ id: genOptId(), tekst:'', correct:false });
+
+//           updateWarningForQuestion(q, warnEl);
+//           commitAll();
+//           renderEditor();
+//         });
+//       }
+
+//       updateWarningForQuestion(q, warnEl);
+//     }
+
+//     // --- reorder / delete vraag ---
+//     var bUp = row.querySelector('.qUp');
+//     if(bUp) bUp.addEventListener('click', function(){
+//       if(idx<=0) return;
+//       var tmp = vragen[idx-1]; vragen[idx-1]=vragen[idx]; vragen[idx]=tmp;
+//       commitAll();
+//       renderEditor();
+//     });
+
+//     var bDown = row.querySelector('.qDown');
+//     if(bDown) bDown.addEventListener('click', function(){
+//       if(idx>=vragen.length-1) return;
+//       var tmp = vragen[idx+1]; vragen[idx+1]=vragen[idx]; vragen[idx]=tmp;
+//       commitAll();
+//       renderEditor();
+//     });
+
+//     var bDel = row.querySelector('.qDel');
+//     if(bDel) bDel.addEventListener('click', function(){
+//       vragen.splice(idx,1);
+//       commitAll();
+//       renderEditor();
+//     });
+
+//     container.appendChild(row);
+//   });
+// }
 function buildVragenEditor(container, vragenArr, onChange){
   container.innerHTML = '';
 
   // normaliseer alles (ids, types, opties, policy, defaults)
-  var vragen = normalizeVragen(vragenArr);
+  var normalized = normalizeVragen(vragenArr);
+
+  // ✅ behoud array-reference indien vragenArr een array is (handig voor parent state)
+  var vragen = normalized;
+  if(Array.isArray(vragenArr)){
+    vragenArr.length = 0;
+    for(var k=0;k<normalized.length;k++) vragenArr.push(normalized[k]);
+    vragen = vragenArr;
+  }
+
+  function safeRerender(){
+    // behoud compat met je huidige app, maar maak het minder fragiel
+    if(typeof renderEditor === 'function') renderEditor();
+  }
 
   function commitAll(){
     onChange(vragen);
   }
 
+  // helper: type UI (policy/media/options) consequent zetten
+  function applyTypeUI(q, row){
+    var isMedia = (q.type === 'photo' || q.type === 'audio');
+    var hasOptions = (q.type === 'mc' || q.type === 'checkbox');
+
+    // type marker (voor accentstrook)
+    row.setAttribute('data-qtype', (q.type || 'open'));
+
+    // badge
+    var badge = row.querySelector('.qTypeBadge');
+    if(badge) badge.textContent = String(q.type || 'open').toUpperCase();
+
+    // media blok
+    var mediaBox = row.querySelector('.qMedia');
+    if(mediaBox){
+      if(isMedia) mediaBox.classList.remove('hidden');
+      else mediaBox.classList.add('hidden');
+    }
+
+    // policy blok vs locked melding
+    var policyBlock  = row.querySelector('.qPolicyBlock');
+    var policyLocked = row.querySelector('.qPolicyLocked');
+
+    if(policyBlock){
+      if(isMedia) policyBlock.classList.add('hidden');
+      else policyBlock.classList.remove('hidden');
+    }
+
+    if(policyLocked){
+      if(isMedia){
+        policyLocked.classList.remove('hidden');
+        policyLocked.textContent = '🔒 Media-opdracht: enkel ter plaatse invulbaar (sluit bij vertrek).';
+      } else {
+        policyLocked.classList.add('hidden');
+        policyLocked.textContent = '';
+      }
+    }
+
+    // opties blok
+    var optBox = row.querySelector('.qOptions');
+    if(optBox){
+      if(hasOptions) optBox.classList.remove('hidden');
+      else optBox.classList.add('hidden');
+    }
+
+    return { isMedia: isMedia, hasOptions: hasOptions };
+  }
+
   vragen.forEach(function(q, idx){
     var row = qs('tplVraagRow').content.firstElementChild.cloneNode(true);
 
+    // zet type-UI meteen correct
+    var typeFlags = applyTypeUI(q, row);
+
     var ta        = row.querySelector('.qText');
-    var badge     = row.querySelector('.qTypeBadge');
-    var optBox    = row.querySelector('.qOptions');
     var optList   = row.querySelector('.qOptList');
     var btnAddOpt = row.querySelector('.qAddOpt');
 
     // media UI
-    var mediaBox      = row.querySelector('.qMedia');
     var mediaMin      = row.querySelector('.qMediaMin');
     var mediaMax      = row.querySelector('.qMediaMax');
     var mediaMinLabel = row.querySelector('.qMediaMinLabel');
@@ -653,28 +1010,23 @@ function buildVragenEditor(container, vragenArr, onChange){
     // warning element
     var warnEl = row.querySelector('.qWarn');
 
-    // type marker (voor accentstrook)
-    row.setAttribute('data-qtype', (q.type || 'open'));
-
-    // --- badge ---
-    if(badge) badge.textContent = String(q.type || 'open').toUpperCase();
-
     // --- vraagtekst ---
     if(ta){
-      ta.value = (q.vraag==null?'':String(q.vraag));
+      ta.value = (q.vraag==null ? '' : String(q.vraag));
       ta.addEventListener('input', function(){
         vragen[idx].vraag = ta.value;
         commitAll();
       });
     }
 
-    // --- policy defaults + UI (1× per vraag) ---
+    // --- policy defaults + UI ---
     q.policy = clampPolicyPair(q.policy);
 
     function updatePolicyUI(){
       if(selShow)  selShow.value  = q.policy.showUntil;
       if(selClose) selClose.value = q.policy.closeWhen;
 
+      // hint laat je zoals gevraagd
       if(polHint){
         if(POLICY_ORDER[q.policy.closeWhen] === POLICY_ORDER[q.policy.showUntil]){
           polHint.textContent = '✓ Toon en sluit op hetzelfde moment.';
@@ -696,25 +1048,6 @@ function buildVragenEditor(container, vragenArr, onChange){
 
       // zet UI terug recht als we clampen moesten doen
       updatePolicyUI();
-            var policyBlock  = row.querySelector('.qPolicyBlock');
-            var policyLocked = row.querySelector('.qPolicyLocked');
-            var isMedia = (q.type === 'photo' || q.type === 'audio');
-
-            if(policyBlock){
-            if(isMedia) policyBlock.classList.add('hidden');
-            else policyBlock.classList.remove('hidden');
-            }
-
-            if(policyLocked){
-            if(isMedia){
-                policyLocked.classList.remove('hidden');
-                policyLocked.textContent = '🔒 Media-opdracht: enkel ter plaatse invulbaar (sluit bij vertrek).';
-            } else {
-                policyLocked.classList.add('hidden');
-                policyLocked.textContent = '';
-            }
-            }
-
       commitAll();
     }
 
@@ -723,20 +1056,16 @@ function buildVragenEditor(container, vragenArr, onChange){
     updatePolicyUI();
 
     // --- media (photo/audio) ---
-    var isMedia = (q.type === 'photo' || q.type === 'audio');
-
-    if(mediaBox){
-      if(isMedia) mediaBox.classList.remove('hidden');
-      else mediaBox.classList.add('hidden');
-    }
-
-    if(isMedia){
+    if(typeFlags.isMedia){
       q.media = ensureObj(q.media);
 
-      // helper: clamp min/max logisch (optioneel maar handig)
+      // ✅ NaN-safe clamp
       function clampMinMax(minVal, maxVal){
         var mn = (minVal==='' || minVal==null) ? null : Number(minVal);
         var mx = (maxVal==='' || maxVal==null) ? null : Number(maxVal);
+
+        if(Number.isNaN(mn)) mn = null;
+        if(Number.isNaN(mx)) mx = null;
 
         if(mn!=null && mn < 0) mn = 0;
         if(mx!=null && mx < 0) mx = 0;
@@ -750,7 +1079,6 @@ function buildVragenEditor(container, vragenArr, onChange){
         if(mediaMaxLabel) mediaMaxLabel.textContent = 'Max foto’s';
         if(mediaHint) mediaHint.textContent = 'Foto-opdracht. Default: 1 foto. (Later: camera upload in geo-app)';
 
-        // defaults als normalize het nog niet deed
         if(q.media.minCount == null) q.media.minCount = 1;
         if(q.media.maxCount == null) q.media.maxCount = 1;
 
@@ -804,21 +1132,13 @@ function buildVragenEditor(container, vragenArr, onChange){
     }
 
     // --- opties voor mc/checkbox ---
-    var hasOptions = (q.type === 'mc' || q.type === 'checkbox');
-
-    if(optBox){
-      if(hasOptions) optBox.classList.remove('hidden');
-      else optBox.classList.add('hidden');
-    }
-
-    if(hasOptions && optList){
+    if(typeFlags.hasOptions && optList){
       optList.innerHTML = '';
 
       (q.opties || []).forEach(function(opt, j){
         var r = document.createElement('div');
         r.className = 'qOptRow';
 
-        // correct selector
         var pick = document.createElement('input');
         pick.type = (q.type === 'mc') ? 'radio' : 'checkbox';
         if(q.type === 'mc'){
@@ -833,23 +1153,22 @@ function buildVragenEditor(container, vragenArr, onChange){
           } else {
             q.opties[j].correct = !!pick.checked;
           }
+          // warning wordt in UI correct gezet; ok om hier te houden
           updateWarningForQuestion(q, warnEl);
           commitAll();
         });
 
-        // tekst input
         var inp = document.createElement('input');
         inp.type = 'text';
         inp.className = 'input';
         inp.placeholder = 'Optie…';
-        inp.value = (opt.tekst==null?'':String(opt.tekst));
+        inp.value = (opt.tekst==null ? '' : String(opt.tekst));
 
         inp.addEventListener('input', function(){
           q.opties[j].tekst = inp.value;
           commitAll();
         });
 
-        // delete optie
         var del = document.createElement('button');
         del.type = 'button';
         del.className = 'btn danger small';
@@ -863,9 +1182,8 @@ function buildVragenEditor(container, vragenArr, onChange){
             q.opties.push({ id: genOptId(), tekst:'', correct:false });
           }
 
-          updateWarningForQuestion(q, warnEl);
           commitAll();
-          renderEditor();
+          safeRerender();
         });
 
         r.appendChild(pick);
@@ -879,9 +1197,8 @@ function buildVragenEditor(container, vragenArr, onChange){
           q.opties = normalizeOpties(q.opties);
           q.opties.push({ id: genOptId(), tekst:'', correct:false });
 
-          updateWarningForQuestion(q, warnEl);
           commitAll();
-          renderEditor();
+          safeRerender();
         });
       }
 
@@ -894,7 +1211,7 @@ function buildVragenEditor(container, vragenArr, onChange){
       if(idx<=0) return;
       var tmp = vragen[idx-1]; vragen[idx-1]=vragen[idx]; vragen[idx]=tmp;
       commitAll();
-      renderEditor();
+      safeRerender();
     });
 
     var bDown = row.querySelector('.qDown');
@@ -902,19 +1219,20 @@ function buildVragenEditor(container, vragenArr, onChange){
       if(idx>=vragen.length-1) return;
       var tmp = vragen[idx+1]; vragen[idx+1]=vragen[idx]; vragen[idx]=tmp;
       commitAll();
-      renderEditor();
+      safeRerender();
     });
 
     var bDel = row.querySelector('.qDel');
     if(bDel) bDel.addEventListener('click', function(){
       vragen.splice(idx,1);
       commitAll();
-      renderEditor();
+      safeRerender();
     });
 
     container.appendChild(row);
   });
 }
+
 
 function renderEditor(){
   var body = qs('editorBody');
