@@ -665,6 +665,23 @@ function genVraagId(){
   return 'q_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
 }
 
+function genOptId(){
+  return 'o_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
+}
+
+function normalizeOpties(optArr){
+  var raw = safeArr(optArr);
+  return raw.map(function(o){
+    if(o && typeof o === 'object'){
+      if(!o.id) o.id = genOptId();
+      if(o.tekst == null) o.tekst = '';
+      if(o.correct !== true) o.correct = false;
+      return o;
+    }
+    return { id: genOptId(), tekst:(o==null?'':String(o)), correct:false };
+  });
+}
+
 function normalizeVragen(arr){
   var raw = safeArr(arr);
   return raw.map(function(v){
@@ -678,16 +695,56 @@ function normalizeVragen(arr){
       q = { id: genVraagId(), type:'open', vraag:(v==null?'':String(v)) };
     }
 
-    // defaults per type
     if(q.type === 'mc' || q.type === 'checkbox'){
-      q.opties = safeArr(q.opties);
-      if(q.opties.length === 0) q.opties = [''];
+      q.opties = normalizeOpties(q.opties);
+      if(q.opties.length === 0) q.opties = [ { id: genOptId(), tekst:'', correct:false } ];
+      if(q.shuffle == null) q.shuffle = true; // optioneel default
     }
 
     return q;
   });
 }
 
+
+function updateWarningForQuestion(q, warnEl){
+  if(!warnEl) return;
+
+  // standaard: verberg
+  warnEl.classList.add('hidden');
+  warnEl.textContent = '';
+
+  // MC: exact 1 correct is ideaal; minimum: minstens 1 aangeduid
+  if(q.type === 'mc'){
+    var opts = safeArr(q.opties);
+    var correctCount = 0;
+    for(var i=0;i<opts.length;i++){
+      if(opts[i] && opts[i].correct === true) correctCount++;
+    }
+
+    if(correctCount === 0){
+      warnEl.textContent = '⚠ Geen juist antwoord aangeduid (MC).';
+      warnEl.classList.remove('hidden');
+    } else if(correctCount > 1){
+      warnEl.textContent = '⚠ Meerdere juiste antwoorden aangeduid bij MC. Kies er precies één.';
+      warnEl.classList.remove('hidden');
+    }
+  }
+
+  // Checkbox: optioneel waarschuwen als 0 correct, maar dat kan ook “reflectie-checklist” zijn.
+  
+  if(q.type === 'checkbox'){
+    var opts2 = safeArr(q.opties);
+    var c2 = 0;
+    for(var j=0;j<opts2.length;j++){
+      if(opts2[j] && opts2[j].correct === true) c2++;
+    }
+    if(c2 === 0){
+      warnEl.textContent = 'ℹ Geen juiste antwoorden aangeduid (checkbox). Mag natuurlijk als je dat wil.';
+      warnEl.classList.remove('hidden');
+    }
+  }
+  
+}
 
 function buildVragenEditor(container, vragenArr, onChange){
   container.innerHTML = '';
@@ -712,6 +769,7 @@ function buildVragenEditor(container, vragenArr, onChange){
 
     // vraagtekst
     ta.value = (q.vraag==null?'':String(q.vraag));
+    var warnEl = row.querySelector('.qWarn');
     ta.addEventListener('input', function(){
       vragen[idx].vraag = ta.value;
       commitAll();
@@ -722,47 +780,76 @@ function buildVragenEditor(container, vragenArr, onChange){
     if(hasOptions){
       optBox.classList.remove('hidden');
       optList.innerHTML = '';
-
       // render opties
-      (q.opties || []).forEach(function(opt, j){
-        var r = document.createElement('div');
-        r.className = 'qOptRow';
+        // render opties (objecten)
+        (q.opties || []).forEach(function(opt, j){
+          var r = document.createElement('div');
+          r.className = 'qOptRow';
 
-        var inp = document.createElement('input');
-        inp.type = 'text';
-        inp.className = 'input';
-        inp.placeholder = 'Optie…';
-        inp.value = (opt==null?'':String(opt));
-        inp.addEventListener('input', function(){
-          vragen[idx].opties[j] = inp.value;
-          commitAll();
-        });
+        // correct selector
+        var pick = document.createElement('input');
+        pick.type = (q.type === 'mc') ? 'radio' : 'checkbox';
+        if(q.type === 'mc'){
+            pick.name = 'correct_' + q.id; // groep per vraag
+        }
+        pick.checked = (opt.correct === true);
 
-        var del = document.createElement('button');
-        del.type = 'button';
-        del.className = 'btn danger small';
-        del.textContent = '✕';
-        del.title = 'Verwijder optie';
-        del.addEventListener('click', function(){
-          vragen[idx].opties.splice(j, 1);
-          if(vragen[idx].opties.length === 0) vragen[idx].opties.push('');
-          commitAll();
-          renderEditor();
-        });
+        pick.addEventListener('change', function(){
+            if(q.type === 'mc'){
+            // exact 1 correct
+            q.opties.forEach(function(o){ o.correct = false; });
+            q.opties[j].correct = true;
+    } else {
+      // meerdere mogelijk
+      q.opties[j].correct = !!pick.checked;
+    }
+    updateWarningForQuestion(q, warnEl);
+    commitAll();
+  });
 
-        r.appendChild(inp);
-        r.appendChild(del);
-        optList.appendChild(r);
-      });
+  // tekst
+  var inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = 'input';
+  inp.placeholder = 'Optie…';
+  inp.value = (opt.tekst==null?'':String(opt.tekst));
+  inp.addEventListener('input', function(){
+    q.opties[j].tekst = inp.value;
+    commitAll();
+  });
 
-      if(btnAddOpt){
-        btnAddOpt.addEventListener('click', function(){
-          vragen[idx].opties = safeArr(vragen[idx].opties);
-          vragen[idx].opties.push('');
-          commitAll();
-          renderEditor();
-        });
-      }
+  // delete
+  var del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'btn danger small';
+  del.textContent = '✕';
+  del.title = 'Verwijder optie';
+  del.addEventListener('click', function(){
+    q.opties.splice(j, 1);
+    if(q.opties.length === 0){
+      q.opties.push({ id: genOptId(), tekst:'', correct:false });
+    }
+    // bij mc: als je net de juiste weggooide, laat alles false (mag), of kies eerste als true (jouw keuze)
+    commitAll();
+    renderEditor();
+  });
+
+  r.appendChild(pick);
+  r.appendChild(inp);
+  r.appendChild(del);
+  optList.appendChild(r);
+});
+
+
+if(btnAddOpt){
+  btnAddOpt.addEventListener('click', function(){
+    q.opties = normalizeOpties(q.opties);
+    q.opties.push({ id: genOptId(), tekst:'', correct:false });
+    commitAll();
+    renderEditor();
+  });
+}
+
     } else {
       optBox.classList.add('hidden');
     }
