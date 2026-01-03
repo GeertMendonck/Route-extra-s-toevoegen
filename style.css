@@ -235,7 +235,14 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   background: rgba(95,211,255,.10);
 }
 
-.qRow{ display:flex; gap:10px; align-items:flex-start; }
+.qRow{
+  display:flex;
+  gap:16px;              /* meer ruimte tussen inhoud en knoppen */
+  align-items:flex-start;
+}
+.qOptions{
+  padding-right: 10px;
+}
 .qMain{ flex:1; min-width:240px; }
 .qTypeBadge{
   display:inline-block;
@@ -256,7 +263,37 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   background: rgba(255,180,0,.12);
   font-size: 13px;
 }
-.qOptRow{ display:flex; gap:8px; align-items:center; }
+/* Optie-rij: [selector] [tekstveld] [delete] netjes op één lijn */
+.qOptRow{
+  display: grid;
+  grid-template-columns: 34px 1fr 44px; /* selector | input | delete */
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+/* radio/checkbox rechts uitlijnen in hun kolom */
+.qOptRow input[type="radio"],
+.qOptRow input[type="checkbox"]{
+  justify-self: end;
+  transform: scale(1.1); /* subtiel groter, optioneel */
+}
+
+/* zorg dat het tekstveld echt de breedte neemt */
+.qOptRow .input,
+.qOptRow input[type="text"]{
+  width: 100%;
+  min-width: 0;
+}
+
+/* optie-delete iets compacter */
+.qOptRow .btn.danger.small{
+  justify-self: end;
+  opacity: .85;
+}
+.qOptRow .btn.danger.small:hover{
+  opacity: 1;
+}
+
 .qOptRow input{
   flex:1;
 }
@@ -270,7 +307,13 @@ code{ background: rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; bor
   outline:none;
   resize:vertical;
 }
-.qBtns{ display:flex; flex-direction:column; gap:8px; }
+.qBtns{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-left: 6px;      /* duwt knoppen iets naar rechts */
+  flex: 0 0 auto;
+}
 
 /* dropdown menu (vragen) */
 .ddMenu{
