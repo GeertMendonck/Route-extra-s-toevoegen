@@ -1155,9 +1155,19 @@ function renderEditor(){
     };
   }
 
-  // toevoegen aan huidige locatie
-  currentLoc.vragen = currentLoc.vragen || [];
-  currentLoc.vragen.push(v);
+   // zoek de actieve locatie op via currentLocId
+  var loc = null;
+  var locs = safeArr(DATA && DATA.locaties);
+  for(var i=0;i<locs.length;i++){
+    if(locs[i] && locs[i].id === currentLocId){
+      loc = locs[i];
+      break;
+    }
+  }
+  if(!loc) return; // zou bij jou niet moeten gebeuren
+
+  loc.vragen = safeArr(loc.vragen);
+  loc.vragen.push(makeVraagObject(type)); // of jouw bestaande object-opbouw
 
   // onthoud laatst gekozen type
   lastQType[typeGroup(type)] = type;
