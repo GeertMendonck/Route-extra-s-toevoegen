@@ -540,6 +540,12 @@ function normalizeVragen(arr){
       if(q.shuffle == null) q.shuffle = true; // optioneel default
     }
     q.policy = clampPolicyPair(q.policy);
+    if(q.type === 'photo' || q.type === 'audio'){
+  q.policy = clampPolicyPair({
+    showUntil: 'inRange',
+    closeWhen: 'inRange'
+  });
+}
     return q;
   });
 }
@@ -690,6 +696,24 @@ function buildVragenEditor(container, vragenArr, onChange){
 
       // zet UI terug recht als we clampen moesten doen
       updatePolicyUI();
+            var policyBlock  = row.querySelector('.qPolicyBlock');
+            var policyLocked = row.querySelector('.qPolicyLocked');
+            var isMedia = (q.type === 'photo' || q.type === 'audio');
+
+            if(policyBlock){
+            if(isMedia) policyBlock.classList.add('hidden');
+            else policyBlock.classList.remove('hidden');
+            }
+
+            if(policyLocked){
+            if(isMedia){
+                policyLocked.classList.remove('hidden');
+                policyLocked.textContent = '🔒 Media-opdracht: enkel ter plaatse invulbaar (sluit bij vertrek).';
+            } else {
+                policyLocked.classList.add('hidden');
+                policyLocked.textContent = '';
+            }
+            }
 
       commitAll();
     }
